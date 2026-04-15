@@ -54,6 +54,7 @@ var CRUNCH_FOV_ADD := -10.0
 var WALK_FOV_ADD := 0.0
 var RUN_FOV_ADD :=  15.0
 var FOV_DT_SPEED := 5.0
+
 var ROLL_DEG = 5.0
 var PITCH_DEG = 4.0
 var CRUNCH_ROLL_MOD = 0.3

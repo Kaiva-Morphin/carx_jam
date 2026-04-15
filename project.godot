@@ -24,6 +24,10 @@ window/size/window_height_override=648
 window/stretch/mode="viewport"
 window/stretch/aspect="expand"
 
+[global_group]
+
+player=""
+
 [input]
 
 crunch={
