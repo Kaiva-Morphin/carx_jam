@@ -4,11 +4,6 @@ extends Control
 @onready var right = $Right
 @onready var swapper = $Swapper
 
-enum Speaker{
-	None,
-	Character,
-	Puddle
-}
 
 var is_dialog = false
 var dialog_progress = 0
@@ -16,7 +11,13 @@ var next_dialog_progress = 0
 var dialog_seq = []
 var swap_animation_time = 0.3
 var time_since_prev_dialog = 0
-var speaker = Speaker.None
+var speaker = DIALOGS.DialogSpeaker.None
+
+
+func _ready() -> void:
+	GLOBAL.dialog = self
+
+signal dialog_end
 
 func _process(delta):
 	if is_dialog:
@@ -31,46 +32,48 @@ func _process(delta):
 					$Emoter.play(mv)
 				
 				$Texturer.play(dialog_seq[next_dialog_progress]["animation"])
-				if dialog_seq[next_dialog_progress]["speaker"] == Speaker.Character:
+				if dialog_seq[next_dialog_progress]["speaker"] == DIALOGS.DialogSpeaker.Character:
 					$Left/BG/Text.text = "\n\n" + dialog_seq[next_dialog_progress]["text"] + "\n\n"
 				else:
 					$Right/BG/Text.text = "\n\n" + dialog_seq[next_dialog_progress]["text"] + "\n\n"
 		else:
 			time_since_prev_dialog = 0
-			if Input.is_action_just_pressed("skip"):
+			if Input.is_action_just_pressed("dialog_next"):
 				next_dialog_progress += 1
 				if next_dialog_progress >= len(dialog_seq):
 					is_dialog = false
+					dialog_end.emit()
 					swapper.play("RESET")
 					$InspectObject.hide()
 				else:
 					var next_speaker = dialog_seq[next_dialog_progress]["speaker"]
 					match speaker:
-						Speaker.None:
+						DIALOGS.DialogSpeaker.None:
 							match next_speaker:
-								Speaker.None:
+								DIALOGS.DialogSpeaker.None:
 									swapper.play("Left")
-								Speaker.Character:
+								DIALOGS.DialogSpeaker.Character:
 									swapper.play("LeftAppear")
-								Speaker.Puddle:
+								DIALOGS.DialogSpeaker.Puddle:
 									swapper.play("RightAppear")
-						Speaker.Character:
+						DIALOGS.DialogSpeaker.Character:
 							match next_speaker:
-								Speaker.None:
+								DIALOGS.DialogSpeaker.None:
 									swapper.play("Left")
-								Speaker.Character:
+								DIALOGS.DialogSpeaker.Character:
 									swapper.play("LeftToLeft")
-								Speaker.Puddle:
+								DIALOGS.DialogSpeaker.Puddle:
 									swapper.play("LeftToRight")
-						Speaker.Puddle:
+						DIALOGS.DialogSpeaker.Puddle:
 							match next_speaker:
-								Speaker.None:
+								DIALOGS.DialogSpeaker.None:
 									swapper.play("Right")
-								Speaker.Character:
+								DIALOGS.DialogSpeaker.Character:
 									swapper.play("RightToLeft")
-								Speaker.Puddle:
+								DIALOGS.DialogSpeaker.Puddle:
 									swapper.play("RightToRight")
 					speaker = next_speaker
+
 func inspect(img, comment):
 	$"Emoter".play("RESET")
 	$"Texturer".play("LeftTalk")
@@ -81,14 +84,14 @@ func inspect(img, comment):
 	self.is_dialog = true
 	self.dialog_progress = -1
 	self.next_dialog_progress = 0
-	self.dialog_seq = [{"speaker": Speaker.Character, "animation": "LeftTalk", "moveset": "LeftIdle", "text": comment}]
+	self.dialog_seq = [{"speaker": DIALOGS.DialogSpeaker.Character, "animation": "LeftTalk", "moveset": "LeftIdle", "text": comment}]
 
 #func _ready():
 	#show_dialog([
-		#{"speaker": Speaker.Character, "animation": "LeftConfused", "moveset": null, "text": """[center][font_size=16]правый"""},
-		#{"speaker": Speaker.Character, "animation": "LeftAngry", "moveset": null, "text": """[center][font_size=16]правый"""},
-		#{"speaker": Speaker.Puddle, "animation": "LeftConfused", "moveset": null, "text": """[center][font_size=16]правый"""},
-		#{"speaker": Speaker.Puddle, "animation": "LeftConfused", "moveset": null, "text": """[center][font_size=16]правый"""},
+		#{"speaker": DIALOGS.DialogSpeaker.Character, "animation": "LeftConfused", "moveset": null, "text": """[center][font_size=16]правый"""},
+		#{"speaker": DIALOGS.DialogSpeaker.Character, "animation": "LeftAngry", "moveset": null, "text": """[center][font_size=16]правый"""},
+		#{"speaker": DIALOGS.DialogSpeaker.Puddle, "animation": "LeftConfused", "moveset": null, "text": """[center][font_size=16]правый"""},
+		#{"speaker": DIALOGS.DialogSpeaker.Puddle, "animation": "LeftConfused", "moveset": null, "text": """[center][font_size=16]правый"""},
 	#])
 
 func show_dialog(sequence):
@@ -100,13 +103,13 @@ func show_dialog(sequence):
 	dialog_progress = -1
 	next_dialog_progress = 0
 	dialog_seq = sequence
-	if sequence[0]["speaker"] == Speaker.Character:
+	if sequence[0]["speaker"] == DIALOGS.DialogSpeaker.Character:
 		swapper.play("LeftAppear")
 		
 	else:
 		swapper.play("RightAppear")
 	speaker = sequence[0]["speaker"]
-# 0 is left; 1 is right
+
 func start_dialog():
 	swapper.play("RESET")
 	$Left/BG/Text.text = ""
@@ -115,13 +118,13 @@ func start_dialog():
 	dialog_progress = -1
 	next_dialog_progress = 0
 	self.dialog_seq = [
-		{"speaker": Speaker.Character, "animation": "LeftConfused", "moveset": "LeftConfused", "text": """[center][font_size=16][tornado]че разлегся?[/tornado][/font_size] """},
-		{"speaker": Speaker.Character, "animation": "RESET", "moveset": "RESET", "text": "[center][font_size=32]лужа"},
-		{"speaker": Speaker.Puddle, "animation": "RightTalk", "moveset": "RightIdle", "text": "[center][font_size=16]че?"},
-		{"speaker": Speaker.Character, "animation": "LeftTalk", "moveset": "RightIdle", "text": "[center][wave]хихихи[/wave] [font_size=30][shake]ПОДВИНЬСЯ"},
-		{"speaker": Speaker.Puddle, "animation": "RightTalkAngry", "moveset": "RightAngry", "text": '''[center][font_size=46][shake]ОТВАЛИ'''},
+		{"speaker": DIALOGS.DialogSpeaker.Character, "animation": "LeftConfused", "moveset": "LeftConfused", "text": """[center][font_size=16][tornado]че разлегся?[/tornado][/font_size] """},
+		{"speaker": DIALOGS.DialogSpeaker.Character, "animation": "RESET", "moveset": "RESET", "text": "[center][font_size=32]лужа"},
+		{"speaker": DIALOGS.DialogSpeaker.Puddle, "animation": "RightTalk", "moveset": "RightIdle", "text": "[center][font_size=16]че?"},
+		{"speaker": DIALOGS.DialogSpeaker.Character, "animation": "LeftTalk", "moveset": "RightIdle", "text": "[center][wave]хихихи[/wave] [font_size=30][shake]ПОДВИНЬСЯ"},
+		{"speaker": DIALOGS.DialogSpeaker.Puddle, "animation": "RightTalkAngry", "moveset": "RightAngry", "text": '''[center][font_size=46][shake]ОТВАЛИ'''},
 	]
-	if dialog_seq[0]["speaker"] == Speaker.Character:
+	if dialog_seq[0]["speaker"] == DIALOGS.DialogSpeaker.Character:
 		swapper.play("LeftAppear")
 	else:
 		swapper.play("RightAppear")

@@ -13,7 +13,7 @@ func update_debug():
 	keys.sort()
 	for key in keys:
 		dbgs.append(key+" "+str(debug[key]))
-	$CanvasLayer/Label.text = "\n".join(dbgs)
+	$"../CanvasLayer/Label".text = "\n".join(dbgs)
 
 #endregion
 
@@ -66,7 +66,7 @@ var RUN_BOB_MUL = 2.0
 @onready var stand_collider := $StandCollider
 @onready var crunch_collider := $CrunchCollider
 @onready var crunch_shapecast := $CrunchShapecast
-
+@onready var interaction_ray := $Joint/PlayerCamera/Interaction
 @onready var camera : Camera3D = $Joint/PlayerCamera
 
 var jump_buffer = 0.0
@@ -87,10 +87,11 @@ func finish_return():
 	await get_tree().process_frame
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
 
-
 var checkpoint
 var c_rot
 func _ready() -> void:
+	GLOBAL.interaction_ray = interaction_ray
+	GLOBAL.player = self
 	checkpoint = global_position
 	c_rot = self.rotation
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -100,11 +101,18 @@ func _ready() -> void:
 var cinematic_lines = 0.0
 var CINEMATIC_LINES_SPEED = 20.0
 var cinematic_lines_size = 100.0
-@onready var cinematic_root := $CanvasLayer/CinematicLines
-@onready var top_line := $CanvasLayer/CinematicLines/Top
-@onready var bottom_line := $CanvasLayer/CinematicLines/Bottom
+@onready var cinematic_root := $"../CanvasLayer/CinematicLines"
+@onready var top_line := $"../CanvasLayer/CinematicLines/Top"
+@onready var bottom_line := $"../CanvasLayer/CinematicLines/Bottom"
 
 func _process(_dt: float) -> void:
+	if Input.is_action_just_pressed("ui_right"):
+		if $Joint/PlayerCamera/ScreenFX/Outline2.visible:
+			$Joint/PlayerCamera/ScreenFX/Outline2.hide()
+			$Joint/PlayerCamera/ScreenFX/Outline4.show()
+		else:
+			$Joint/PlayerCamera/ScreenFX/Outline2.show()
+			$Joint/PlayerCamera/ScreenFX/Outline4.hide()
 	dbg("FPS", Engine.get_frames_per_second())
 	head_bob(_dt)
 	#region FAV_LINES :D
@@ -118,13 +126,6 @@ func _process(_dt: float) -> void:
 	cinematic_lines = clamp(cinematic_lines, 0., 1.)
 		
 	#endregion
-	if Input.is_action_just_pressed("back"):
-		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-			$"../Control/CenterContainer".hide()
-		else:
-			$"../Control/CenterContainer".show()
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if locked: return
 	if global_position.y < -75.0:
 		return_to_checkpoint()
@@ -151,16 +152,6 @@ func _process(_dt: float) -> void:
 	if fov_change || states(STATES.STAND):
 		player_camera.fov = lerp(player_camera.fov, cam_fov_target, _dt * FOV_DT_SPEED)
 	update_debug()
-
-
-func _notification(what):
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		#$"../Control/CenterContainer".show()
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
-		#if !$"../Control/CenterContainer".visible:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	return
 
 #endregion
 
@@ -389,9 +380,7 @@ func _unhandled_input(event):
 		else:
 			if camera.global_rotation.x + target > -1.53:
 				camera.rotate_x(target)
-	if event is InputEventMouseButton:
-		#if !$"../Control/CenterContainer".visible:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
 
 
 func handle_gamepad():
