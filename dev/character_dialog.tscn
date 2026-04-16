@@ -665,5 +665,5 @@ mesh = SubResource("ArrayMesh_o4mo0")
 skin = SubResource("Skin_kbcqo")
 skeleton = NodePath("..")
 
-[connection signal="area_entered" from="CharacterDialog/Area3D" to="CharacterDialog" method="_on_area_3d_area_entered"]
-[connection signal="area_exited" from="CharacterDialog/Area3D" to="CharacterDialog" method="_on_area_3d_area_exited"]
+[connection signal="area_entered" from="CharacterDialog/Area3D" to="." method="_on_area_3d_area_entered"]
+[connection signal="area_exited" from="CharacterDialog/Area3D" to="." method="_on_area_3d_area_exited"]

@@ -46,6 +46,7 @@ var MAX_SLOPE_ANGLE := deg_to_rad(45.0)
 var MAX_COYOT_TIME = 0.1
 var JUMP_STRENGTH = 12.0
 var JUMP_BUFFER_TIME = 0.15
+var WALLJUMP_STRENGTH = 10.0
 
 var CRUNCH_SPEED := 5.0
 var WALK_SPEED := 10.0
@@ -384,13 +385,13 @@ func handle_jump(dt):
 		velocity.x = n.x
 		velocity.z = n.y
 		if velocity.y < 10.0:
-			velocity.y = lerp(y, 10.0, dt * 5.0)
+			velocity.y = lerp(y, 10.0, dt * 7.0)
 		return
 	
 	if jump_buffer > 0.0:
 		if target && !is_on_floor():
 			velocity.y = JUMP_STRENGTH
-			velocity += target * 15
+			velocity += target * WALLJUMP_STRENGTH
 			state = STATES.INAIR
 			jump_buffer = 0.0
 			inair_jumps = MAX_AIRJUMPS
