@@ -34,6 +34,7 @@ window/stretch/aspect="expand"
 player=""
 player_interaction=""
 interactable=""
+ladder=""
 
 [input]
 
@@ -126,6 +127,7 @@ interact={
 
 [layer_names]
 
+3d_physics/layer_2="ladder"
 3d_physics/layer_3="interactible"
 
 [physics]

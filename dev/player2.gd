@@ -13,11 +13,22 @@ func update_debug():
 	keys.sort()
 	for key in keys:
 		dbgs.append(key+" "+str(debug[key]))
+	dbgs.append("STATE:"+str(STATES.keys()[state]))
 	$"../CanvasLayer/Label".text = "\n".join(dbgs)
 
 #endregion
 
-enum STATES {STAND, WALK, RUN, INAIR, FALLING, CRUNCH, SLIDE, ONWALL, } 
+enum STATES {STAND, WALK, RUN, INAIR, FALLING, CRUNCH, SLIDE, ONWALL, LEDGEGRAB, LEDGECLIMB}
+
+var LEDGE_CLIMB_DURATION := 0.35   # секунд на подъём
+var ledge_climb_timer := 0.0
+var ledge_target_pos := Vector3.ZERO
+
+@onready var ledge_check_high : Area3D = $LedgeCheckHigh
+@onready var ledge_check_low  : RayCast3D = $LedgeCheckLow
+@onready var ledgecast : ShapeCast3D = $LedgeCast
+@onready var ladder_sensor : RayCast3D = $LadderSensor
+
 
 #region CONSTS
 var ACC_INAIR := 60.0
@@ -39,7 +50,7 @@ var JUMP_BUFFER_TIME = 0.15
 var CRUNCH_SPEED := 5.0
 var WALK_SPEED := 10.0
 var RUN_SPEED := 14.0
-var INAIR_SPEED := WALK_SPEED
+var INAIR_SPEED := 5.0
 
 var FOV := 75.0
 var CRUNCH_FOV_ADD := -10.0
@@ -227,7 +238,6 @@ func _physics_process(_dt: float) -> void:
 		state = STATES.CRUNCH
 		crunch_collider.disabled = false
 		stand_collider.disabled = true
-	
 	match state:
 		STATES.STAND:
 			if not is_on_floor():
@@ -267,10 +277,9 @@ func _physics_process(_dt: float) -> void:
 			velocity.y -= GRAVITY * _dt
 			if direction:
 				var d = 1.0 - Vector2(direction.x, direction.z).normalized().dot(Vector2(velocity.x, velocity.z).normalized()) * 0.5 - 0.45
-				d += 1.0 - clamp(velocity.length(), 0.0, 18.0) / 18.0
+				d += 1.0 - clamp(velocity.length(), 0.0, INAIR_SPEED) / INAIR_SPEED
 				d = clamp(d, 0.0, 1.0)
 				velocity += _dt * ACC_INAIR * direction * d
-			
 			if velocity.y < 0.0 && wall_normal:
 				velocity.y += GRAVITY * _dt * 0.7
 			if is_on_floor():
@@ -287,8 +296,8 @@ func _physics_process(_dt: float) -> void:
 				state = STATES.STAND
 				crunch_collider.disabled = true
 				stand_collider.disabled = false
+	handle_jump(_dt)
 	move_and_slide()
-	handle_jump()
 	_push_rigid_bodies()
 
 @export var mass_kg: float = 1.0
@@ -322,6 +331,7 @@ func _push_rigid_bodies():
 			# _apply_realistic_push(rigid_body, collision, push_direction)
 
 func head_bob(dt):
+	player_camera_joint.rotation.x = -clamp(lerp(player_camera_joint.rotation.x, velocity.y * 0.01, dt * 0.001), -1., 1.)
 	var t_bob_n = 0.0
 	if is_on_floor():
 		t_bob_n = Vector2(velocity.x, velocity.z).length() * dt
@@ -330,10 +340,12 @@ func head_bob(dt):
 	if states(STATES.CRUNCH):
 		bob_amp *= CRUNCH_BOB_AMP_MUL 
 	player_camera.position.y = sin(t_bob * BOB_FREQ) * bob_amp
+	player_camera.position.x = cos(t_bob * BOB_FREQ * 0.5) * bob_amp
 
-func handle_jump():
+func handle_jump(dt):
 	if states(STATES.CRUNCH): return
-	
+	#dbg("CAN LEDGE", !ledge_check_high.has_overlapping_bodies() && ledge_check_low.get_collider())
+
 	wall_normal = Vector3.ZERO
 	var target = Vector3.ZERO
 	
@@ -347,6 +359,34 @@ func handle_jump():
 			target += ray_coll['normal']
 	target = target.normalized()
 	wall_normal = target
+	#dbg("CAN LEDGE", !ledge_check_high.has_overlapping_bodies() && ledge_check_low.get_collider())
+	# LEDGE!
+	var ladder = Vector3.ZERO
+	if ladder_sensor.get_collider():
+		ladder = ladder_sensor.get_collision_normal()
+	if Input.is_action_pressed("jump") && ladder:
+		velocity = ladder * -10.0
+		velocity.y = 10.0
+		return
+	if Input.is_action_pressed("jump") && ((
+			states(STATES.INAIR, STATES.ONWALL) && \
+			!ledge_check_high.has_overlapping_bodies() && \
+			ledge_check_low.get_collider() && \
+			ledgecast.is_colliding())) \
+	:
+		jump_buffer = 0.0
+		var y = velocity.y
+		#if wall_normal:
+			#velocity = wall_normal * -10.0
+		#else:
+		#if true:
+		var n = Vector2(transform.basis.z.x, transform.basis.z.z).normalized() * -10.0
+		velocity.x = n.x
+		velocity.z = n.y
+		if velocity.y < 10.0:
+			velocity.y = lerp(y, 10.0, dt * 5.0)
+		return
+	
 	if jump_buffer > 0.0:
 		if target && !is_on_floor():
 			velocity.y = JUMP_STRENGTH
@@ -355,13 +395,11 @@ func handle_jump():
 			jump_buffer = 0.0
 			inair_jumps = MAX_AIRJUMPS
 			return
-
 		# coyote jump
 		elif coyot_time < MAX_COYOT_TIME:
 			velocity.y = JUMP_STRENGTH
 			jump_buffer = 0.0
 			return
-
 		# air jump
 		elif inair_jumps > 0 and !is_on_floor():
 			inair_jumps -= 1
@@ -380,8 +418,6 @@ func _unhandled_input(event):
 		else:
 			if camera.global_rotation.x + target > -1.53:
 				camera.rotate_x(target)
-
-
 
 func handle_gamepad():
 	var look_x = Input.get_action_strength("look_right") - Input.get_action_strength("look_left")
