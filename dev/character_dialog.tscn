@@ -340,7 +340,7 @@ bind/41/name = &"Bone"
 bind/41/bone = -1
 bind/41/pose = Transform3D(-2.577092, 0, 0.034070935, 0, 2.5773172, 0, -0.034070935, 0, -2.577092, 6.076644e-07, 0, -9.3297143e-07)
 
-[node name="Interaction" type="Area3D" unique_id=1613010932 groups=["interactable"]]
+[node name="Interaction" type="Area3D" unique_id=1613010932 groups=["interactible"]]
 collision_layer = 4
 collision_mask = 4
 script = ExtResource("1_7up1s")
