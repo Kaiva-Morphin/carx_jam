@@ -2,8 +2,9 @@ extends Node
 class_name RumorManager
 
 signal hearing_unlocked(key)
+signal image_discovered(key)
 signal description_unlocked(hearing_key, index)
-signal connection_unlocked(from_key, to_key)
+signal connection_unlocked(from_key, to_key, desc)
 
 var hearings_data = {}
 var hearings_state = {}
@@ -12,6 +13,11 @@ var knowledge = {}
 func _ready():
 	_load_data()
 	_init_state()
+
+enum RumorImage {
+	Skeleton,
+	Cat
+}
 
 func _load_data():
 	hearings_data = {
@@ -22,21 +28,31 @@ func _load_data():
 				{ "text": "It comes from Planet X.", "cond": "located_signal" }
 			],
 			"connections": [
-				{ "to": "planet_x", "cond": "located_signal" }
+				{ "to": "planet_x", "cond": "located_signal", "description": "Papa of" }
 			],
-			"image_trigger": "located_signal",
-			"image": "image.png",
-			"position": Vector2(100, 200)
+			"image": RumorImage.Cat,
+			"image_cond": ["found_signal"],
+			"position": Vector2(0, 0)
 		},
 		"planet_x": {
 			"title": "Planet X",
 			"descriptions": [
-				{ "text": "A distant planet.", "cond": "visited_planet_x" }
+				{ "text": "How i can get here?", "cond": "located_signal" },
+				{ "text": "A distant planet.", "cond": "visited_planet_x" },
 			],
 			"connections": [],
-			"position": Vector2(400, 200)
+			"image": RumorImage.Skeleton,
+			"image_cond": ["visited_planet_x"],
+			"position": Vector2(1000, 500)
 		}
 	}
+
+func image(key):
+	match key:
+		RumorImage.Skeleton: return preload("res://assets/avatars/skeleton.png")
+		RumorImage.Cat: return preload("res://assets/avatars/cat.png")
+		_: print("NO SUCH IMAGE KEY IN RUMOR REGISTRY")
+	return null
 
 func _init_state():
 	for key in hearings_data.keys():
@@ -72,6 +88,9 @@ func _update_hearing(key: String):
 			continue
 		var cond = data.descriptions[i].cond
 		if knowledge.get(cond, false):
+			if cond in data.image_cond:
+				prints(cond, data.image_cond)
+				emit_signal("image_discovered", key)
 			state.descriptions[i] = true
 			any_unlocked = true
 			emit_signal("description_unlocked", key, i)
@@ -84,7 +103,7 @@ func _update_hearing(key: String):
 		var cond = data.connections[i].cond
 		if knowledge.get(cond, false):
 			state.connections[i] = true
-			emit_signal("connection_unlocked", key, data.connections[i].to)
+			emit_signal("connection_unlocked", key, data.connections[i].to, data.connections[i].description)
 
 func get_hearing(key: String):
 	return hearings_data.get(key, null)

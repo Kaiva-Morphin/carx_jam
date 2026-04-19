@@ -1,4 +1,4 @@
-extends GLOBAL.Inspectable
+extends Inspectable
 
 @onready var object = $Object
 @onready var object_mesh : MeshInstance3D = $Object/Object
@@ -33,6 +33,7 @@ func end_interaction():
 	GLOBAL.processor.blur_out()
 	interaction_end.emit()
 	object.hide()
+	GLOBAL.ui_state = GLOBAL.UI_STATE.GAME
 
 var sensitivity := 0.0005
 var gamepad_multiplier := 5.0
@@ -72,7 +73,7 @@ func _unhandled_input(event):
 func _process(delta):
 	if !inspecting:
 		return
-	if Input.is_action_just_pressed("back"):
+	if Input.is_action_just_pressed("back") || Input.is_action_just_pressed("open_tab"):
 		end_interaction()
 	_handle_gamepad(delta)
 	# применяем инерцию

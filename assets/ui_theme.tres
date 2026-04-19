@@ -1,6 +1,6 @@
 [gd_resource type="Theme" format=3 uid="uid://ci00tmlsx2hnf"]
 
-[ext_resource type="FontFile" uid="uid://dgvv4tfskovj" path="res://assets/fonts/DelaGothicOne-Regular.ttf" id="1_wf4hb"]
+[ext_resource type="FontFile" uid="uid://c32bms5higjme" path="res://assets/fonts/Literata-VariableFont_opsz,wght.ttf" id="1_wf4hb"]
 
 [resource]
 default_font = ExtResource("1_wf4hb")
