@@ -1,6 +1,7 @@
 extends GLOBAL.Inspectable
 
 @onready var object = $Object
+@onready var object_mesh : MeshInstance3D = $Object/Object
 @onready var prop = $Prop
 
 
@@ -9,6 +10,7 @@ func _ready() -> void:
 	object.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	super._ready()
 	interaction_end.connect(GLOBAL.unblock_player)
+	object_mesh.layers = 2
 
 func hint() -> String:
 	return "E - inspect"

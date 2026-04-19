@@ -20,52 +20,28 @@ func _on_size_changed():
 	set_subviewport_size(size)
 
 
-@onready var svc = $"../CanvasLayer/SubViewportContainer"
+
 @onready var sc = $"../CanvasLayer/Dialog"
+@onready var svc = $"../CanvasLayer/SubViewportContainer"
+@onready var svc2 = $"../CanvasLayer/Board/SubViewportContainer"
 func set_subviewport_size(size: Vector2):
 	var rs = sc.size
 	var ui_inv_scale = ui_target_size.x / size.x
 	var ui_inv_scale2 = ui_target_size.y / size.y
-	#var ui_inv_scale2 = size.x / get_viewport().get_visible_rect().size.x
 	GLOBAL.player.dbg("CS", $"../CanvasLayer/Dialog".size)
-	GLOBAL.player.dbg("RS", size)
+	GLOBAL.player.dbg("RS", DisplayServer.window_get_size())
 	GLOBAL.player.dbg("IS2", ui_target_size) 
+	# это пиздец
 	if rs.x > ui_target_size.x :
 		svc.scale = Vector2(ui_inv_scale2, ui_inv_scale2)
 		svc.position = Vector2(0.0, 0.0)
 	else:
 		svc.scale = Vector2(ui_inv_scale, ui_inv_scale)
-		# TODO!
-	#svc.scale = Vector2(0.5, 0.5)
-		#svc.position.y = svc.size.y / 2.0 - rs.y / 2.0
-		#var scaled_size = svc.size * svc.scale
-		#svc.position.y = (size.y - scaled_size.y) * 0.5
-		
-		#var d1 = (rs.x / rs.y)
-		#var d2 = (size.x / size.y)
-		#var d = d1 / d2
-		#$"../CanvasLayer/SubViewportContainer".position.y = -dy * 0.5
-	#$"../CanvasLayer/SubViewportContainer".scale = Vector2(ui_inv_scale2, ui_inv_scale2)
-	#$"../CanvasLayer/SubViewportContainer".size = size
+		svc.position = Vector2(0.0, -size.y * 0.5 * ui_inv_scale + ui_target_size.y * 0.5)
+		GLOBAL.player.dbg("S", -size.y * 0.5)
 	$"../CanvasLayer/SubViewportContainer/SubViewport".size = size
-	# 2560, 1369 : 1.0 
-	# 1211, 648 : 0.473
-	# 1152
-	###
-	#зкште
-	#print(ui_target_size.x / size.x)
-	#print($"../CanvasLayer/SubViewportContainer".size.y / size.y)
-	#print(get_viewport().canvas_transform.)
-	#print(get_viewport().get_canvas_transform().get_scale().y)
-	#print(get_viewport().get_camera_3d().size)
-	#print(ui_inv_scale)
-	
-	#print($"../CanvasLayer/SubViewportContainer".size)
-	#var s = ui_inv_scale * size.x
-	
-	#$"../CanvasLayer/SubViewportContainer".scale = Vector2(ui_inv_scale, ui_inv_scale)
-	#$"../CanvasLayer/SubViewportContainer".scale = Vector2(1.0, 1.0)
-	#$"../CanvasLayer/SubViewportContainer".position.x = size.x / 2.0
+	$"../CanvasLayer/Board/SubViewportContainer/SubViewport".size = size
+	svc2.scale = svc.scale
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton:
@@ -74,16 +50,35 @@ func _unhandled_input(event):
 func _notification(what):
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	return
+	#if what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
+		#Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _process(_dt: float) -> void:
+	var size = DisplayServer.window_get_size()
+	set_subviewport_size(size)
+	
 	if Input.is_action_just_pressed("unfocus"):
 		if Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		else:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if Input.is_action_just_pressed("peek_hint"):
+		for node in get_tree().get_nodes_in_group("visual_hint"): node.show()
+	if Input.is_action_just_released("peek_hint"):
+		for node in get_tree().get_nodes_in_group("visual_hint"): node.hide()
+	if Input.is_action_just_pressed("open_tab"):
+		tab_opened = !tab_opened
+		if tab_opened:
+			board.show()
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		else:
+			board.hide()
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+var tab_opened = false
+
+@onready var board = $"../CanvasLayer/Board"
+
 
 
 func blur_in():

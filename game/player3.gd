@@ -111,13 +111,13 @@ func _ready() -> void:
 #@onready var bottom_line := $"../CanvasLayer/CinematicLines/Bottom"
 
 func _process(_dt: float) -> void:
-	#if Input.is_action_just_pressed("ui_right"):
-		#if $Joint/PlayerCamera/ScreenFX/Outline2.visible:
-			#$Joint/PlayerCamera/ScreenFX/Outline2.hide()
-			#$Joint/PlayerCamera/ScreenFX/Outline4.show()
-		#else:
-			#$Joint/PlayerCamera/ScreenFX/Outline2.show()
-			#$Joint/PlayerCamera/ScreenFX/Outline4.hide()
+	if Input.is_action_just_pressed("ui_right"):
+		if $Joint/PlayerCamera/ScreenFX/Outline2.visible:
+			$Joint/PlayerCamera/ScreenFX/Outline2.hide()
+			$Joint/PlayerCamera/ScreenFX/Outline4.show()
+		else:
+			$Joint/PlayerCamera/ScreenFX/Outline2.show()
+			$Joint/PlayerCamera/ScreenFX/Outline4.hide()
 	dbg("FPS", Engine.get_frames_per_second())
 	head_bob(_dt)
 	#region FAV_LINES :D
