@@ -9,12 +9,15 @@ var inspect_node : Node3D
 var processor : Node3D
 var dbg_label : Label
 var subtitle : RichTextLabel
-
+var subtitle_progress : ColorRect
+var inspect_cam_joint : Node3D
+	
 enum UI_STATE {
 	GAME,
 	INSPECTING,
 	BOARD,
-	DIALOG
+	DIALOG,
+	ATOM
 }
 
 var ui_state : UI_STATE

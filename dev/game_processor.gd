@@ -53,8 +53,7 @@ var rotation_speed = 3.0
 var current_yaw: float = 0.0
 var current_pitch: float = 0.0
 func _process(_dt: float) -> void:
-	#var size = DisplayServer.window_get_size()
-	#set_subviewport_size(size)
+	GLOBAL.GameAct
 	if look_target:
 		var cam = GLOBAL.player.camera
 		var diff = cam.global_position - look_target.global_position
@@ -76,7 +75,6 @@ func _process(_dt: float) -> void:
 		# Сохраняем текущие углы, чтобы при следующем look_target не было рывка
 		current_yaw = GLOBAL.player.global_rotation.y
 		current_pitch = GLOBAL.player.camera.rotation.x
-	
 	if Input.is_action_just_pressed("unfocus"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if Input.is_action_just_pressed("peek_hint") && GLOBAL.ui_state == GLOBAL.UI_STATE.GAME:
@@ -111,15 +109,12 @@ func _process(_dt: float) -> void:
 func close_tab():
 	blur_out()
 	board.hide()
-	# board.process_mode = Node.PROCESS_MODE_DISABLED
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	GLOBAL.unblock_player()
 
 
 @onready var board = $"../CanvasLayer/Board"
 @onready var board2d = $"../CanvasLayer/Board/SubViewportContainer/SubViewport/Board2D"
-
-
 
 func blur_in():
 	$"../CanvasLayer/BlurPlayer".play("blur_in")
@@ -133,7 +128,18 @@ func cinematic_in():
 func cinematic_out():
 	$"../CanvasLayer/CinematicPlayer".play("out")
 
+func papa_in():
+	$"../CanvasLayer/PapaPlayer".play("in")
+
+func papa_out():
+	$"../CanvasLayer/PapaPlayer".play("out")
+
+
 var look_target = null
 
 func player_look(target):
 	look_target = target
+
+func set_subtitle_skip_progress(v):
+	var sm : ShaderMaterial = GLOBAL.subtitle_progress.material
+	sm.set_shader_parameter("fill_ratio", v)

@@ -1,171 +1,437 @@
 extends Node3D
 
-
+# ─────────────────────────────────────────────
+#  ATOM CLASS
+# ─────────────────────────────────────────────
 class Atom extends Area3D:
-	var neighbors : Array[Atom] = []
-	var _enabled : MeshInstance3D
-	var _disabled : MeshInstance3D
-	var enabled = false
-	
-	func _init(c, e, d):
-		add_child(c.duplicate())
-		_enabled = e.duplicate()
+	var neighbors  : Array         = []   # Array[Atom] — forward-declared as plain Array
+	var _enabled   : MeshInstance3D
+	var _disabled  : MeshInstance3D
+	var enabled    : bool = false
+	var grid_pos   : Vector3i         # position in grid, used for animation
+
+	func _init(col: CollisionShape3D, e: MeshInstance3D, d: MeshInstance3D) -> void:
+		add_child(col.duplicate())
+		_enabled  = e.duplicate()
 		_disabled = d.duplicate()
 		add_child(_enabled)
-		_enabled.position = Vector3.ZERO
 		add_child(_disabled)
+		_enabled.position  = Vector3.ZERO
 		_disabled.position = Vector3.ZERO
 		enabled = true
-		swap()
-	
-	func swap():
-		unupdated_swap()
-		for n in neighbors:
-			n.unupdated_swap()
-	
-	func unupdated_swap():
-		enabled = !enabled
+		_apply_visual()
+
+	func _apply_visual() -> void:
 		if enabled:
-			_enabled.show()
-			_disabled.hide()
+			_enabled.show();  _disabled.hide()
 		else:
-			_disabled.show()
-			_enabled.hide()
+			_disabled.show(); _enabled.hide()
 
-func check_win():
-	for atom in field:
-		if !atom.enabled: return false
-	print("WIN")
-	return true
+	func swap(mouse= false) -> void:
+		_unupdated_swap()
+		if mouse:
+			self.tween()
+		for n in neighbors:
+			n._unupdated_swap()
+			if mouse:
+				n.tween(0.8)
+	
+	func tween(s=1.0):
+		var tw = create_tween()
+		if self.enabled:
+			tw.tween_property(self, "scale", s * Vector3.ONE * 1.5, 0.18) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+			tw.tween_property(self, "scale", Vector3.ONE, 0.18) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		else:
+			tw.tween_property(self, "scale", s * Vector3.ONE * 1.5, 0.18) \
+				.set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+			tw.tween_property(self, "scale", Vector3.ONE, 0.18) \
+				.set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+	func _unupdated_swap() -> void:
+		enabled = !enabled
+		_apply_visual()
 
-func _process(_delta: float) -> void:
-	pass
+const GRID_SIZE  := Vector3i(4, 3, 4)
+const CELL_SIZE  := 2.0
 
-func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		raycast_from_screen(event.position)
+var levels : Array = [
 
-func raycast_from_screen(screen_pos: Vector2):
-	var camera = get_viewport().get_camera_3d()
-	var from = camera.project_ray_origin(screen_pos)
-	var dir = camera.project_ray_normal(screen_pos)
-	var to = from + dir * 1000.0  # длина луча
-	var space = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.create(from, to)
-	query.collide_with_areas = true
-	var result = space.intersect_ray(query)
-	if result:
-		result.collider.swap()
-		check_win()
+	[
+		[1,1,0,0,
+		 1,1,0,0,
+		 0,0,0,0,
+		 0,0,0,0],
 
+		[0,0,0,0,
+		 0,1,1,0,
+		 0,1,1,0,
+		 0,0,0,0],
 
-const GRID_SIZE := Vector3i(4, 2, 4)
+		[0,0,0,0,
+		 0,0,0,0,
+		 0,0,1,1,
+		 0,0,1,1]
+	],
 
-const MIN_NEIGHBORS := 2
-const MAX_NEIGHBORS := 4
+	[
+		[0,0,0,0,
+		 0,0,0,0,
+		 0,0,0,0,
+		 0,0,0,0],
 
-const CELL_SIZE := 2.0
+		[0,1,1,0,
+		 1,1,1,1,
+		 0,1,1,0,
+		 0,0,0,0],
 
-var grid := {} # Vector3i -> Atom
-var atoms := []
-var field := []
+		[0,0,0,0,
+		 0,1,1,0,
+		 0,0,0,0,
+		 0,0,0,0]
+	],
 
+	[
+		[0,0,0,0,
+		 0,1,0,0,
+		 0,1,0,0,
+		 0,0,0,0],
+
+		[0,1,1,1,
+		 1,1,0,0,
+		 0,1,0,0,
+		 0,0,0,0],
+
+		[0,0,0,0,
+		 0,1,1,0,
+		 0,1,0,0,
+		 0,1,0,0]
+	],
+
+	[
+		[1,1,1,1,
+		 1,0,0,1,
+		 1,0,0,1,
+		 1,1,1,1],
+
+		[1,0,0,1,
+		 0,0,0,0,
+		 0,0,0,0,
+		 1,0,0,1],
+
+		[1,1,1,1,
+		 1,0,0,1,
+		 1,0,0,1,
+		 1,1,1,1]
+	],
+]
+
+# ─────────────────────────────────────────────
+#  STATE
+# ─────────────────────────────────────────────
+var current_level : int  = 0
+var grid          : Dictionary = {}
+var atoms         : Array      = []   # all Atom nodes
+var field         : Array      = []   # same as atoms (used for win check)
+var connections   : Array      = []   # MeshInstance3D cylinders
+var is_animating  : bool       = false
+
+var is_dragging := false
+var drag_started := false
+var drag_start_pos := Vector2.ZERO
+
+# --- CAMERA ROTATION VARIABLES (Modified from Inspectable) ---
+var _rotate_y := 0.0       # Current Yaw
+var _rotate_x := 0.0       # Current Pitch
+
+var target_rotate_y := 0.0 # Target Yaw
+var target_rotate_x := 0.0 # Target Pitch
+
+var drag_sensitivity := 0.01
+var smooth_speed := 10.0   # Speed of lerp smoothing
+var pitch_limit := deg_to_rad(5.0)
+var pitch_limit_top := deg_to_rad(5.0)
+# -----------------------------------------------------------
+
+var scene_root : Node3D
+
+# ─────────────────────────────────────────────
+#  READY
+# ─────────────────────────────────────────────
 func _ready() -> void:
-	generate_grid()
 	$Sample.hide()
 	$Sample.process_mode = PROCESS_MODE_DISABLED
-	
-func generate_grid():
-	var origin = Vector3(-GRID_SIZE.x, 0, -GRID_SIZE.z) * CELL_SIZE
-	
-	# 1. создаём узлы (не все заполняем)
-	for x in GRID_SIZE.x:
-		for y in GRID_SIZE.y:
-			for z in GRID_SIZE.z:
-				if randf() < 0.7: # плотность
-					var a = Atom.new(
-						$Sample/CollisionShape3D,
-						$Sample/Enabled,
-						$Sample/Disabled
-					)
-					
-					var pos = origin + Vector3(x, y, z) * CELL_SIZE
-					a.position = pos
-					
-					add_child(a)
-					
-					var key = Vector3i(x, y, z)
-					grid[key] = a
-					atoms.append(a)
-					field.append(a)
-	
-	# 2. создаём связи
-	for key in grid.keys():
-		var a = grid[key]
-		var neighbors := get_neighbors(key)
+	#load_level(current_level)
+
+# ─────────────────────────────────────────────
+#  INPUT
+# ─────────────────────────────────────────────
+func _input(event: InputEvent) -> void:
+	if GLOBAL.ui_state != GLOBAL.UI_STATE.ATOM: return
+	if event is InputEventMouseButton:
+		if event.pressed:
+			is_dragging = true
+			drag_started = false
+			drag_start_pos = event.position
+		else:
+			if not drag_started:
+				_raycast_from_screen(event.position)
+			is_dragging = false
+			
+	elif event is InputEventMouseMotion and is_dragging:
+		var delta = event.relative
+		if not drag_started and event.relative.length() > 1.5:
+			drag_started = true
 		
-		for nkey in neighbors:
-			var b = grid.get(nkey)
-			if b and not a.neighbors.has(b):
-				a.neighbors.append(b)
-				b.neighbors.append(a)
-				
-				make_connection(a.position, b.position)
+		if drag_started:
+			# Изменяем целевые углы, а не текущие напрямую
+			target_rotate_y += delta.x * drag_sensitivity
+			target_rotate_x += delta.y * drag_sensitivity # Инверсия оси Y обычно нужна, но зависит от настройки управления
+			
+			# Ограничиваем цель по вертикали сразу при вводе
+			target_rotate_x = clamp(target_rotate_x, -pitch_limit, pitch_limit_top)
+
+func _raycast_from_screen(screen_pos: Vector2) -> void:
+	var camera := get_viewport().get_camera_3d()
+	var from   := camera.project_ray_origin(screen_pos)
+	var dir    := camera.project_ray_normal(screen_pos)
+	var to     := from + dir * 1000.0
+	var space  := get_world_3d().direct_space_state
+	var query  := PhysicsRayQueryParameters3D.create(from, to)
+	query.collide_with_areas = true
+	var result := space.intersect_ray(query)
+	if result:
+		result.collider.swap(true)
+		if check_win():
+			_trigger_win()
+
+# ─────────────────────────────────────────────
+#  WIN CHECK
+# ─────────────────────────────────────────────
+func check_win() -> bool:
+	for atom in field:
+		if not atom.enabled:
+			return false
+	return true
+
+func _process(delta: float) -> void:
+	# Если мы не тащим мышку, вертикальный угол стремится к 0
+	if GLOBAL.ui_state != GLOBAL.UI_STATE.ATOM: return
+	if not is_dragging:
+		target_rotate_x = 0.0
 	
-	# 3. балансируем степени
-	balance_graph()
+	# Плавное приближение текущих углов к целевым (Lerp)
+	_rotate_y = lerp(_rotate_y, target_rotate_y, smooth_speed * delta)
+	_rotate_x = lerp(_rotate_x, target_rotate_x, smooth_speed * delta)
+	
+	# Применяем вращение к сцене
+	if scene_root:
+		scene_root.rotation.y = _rotate_y
+		$CamJoint.rotation.x = _rotate_x
+	# -----------------------------
 
+func _trigger_win() -> void:
+	is_animating = true
+	print("WIN! Level %d complete." % current_level)
+	await _animate_win()
+	current_level = (current_level + 1) % levels.size()
+	await _animate_exit()
+	_clear_field()
+	load_level(current_level)
+	await _animate_enter()
+	is_animating = false
 
-func get_neighbors(p: Vector3i) -> Array:
-	return [
-		p + Vector3i(1, 0, 0),
-		p + Vector3i(-1, 0, 0),
-		p + Vector3i(0, 1, 0),
-		p + Vector3i(0, -1, 0),
-		p + Vector3i(0, 0, 1),
-		p + Vector3i(0, 0, -1),
-	].filter(func(v):
-		return grid.has(v)
-	)
+# ─────────────────────────────────────────────
+#  LEVEL LOADING
+# ─────────────────────────────────────────────
+func load_level(index: int) -> void:
+	scene_root = Node3D.new()
+	add_child(scene_root)
+	var level_data : Array = levels[index]
+	grid  = {}
+	atoms = []
+	field = []
 
-func balance_graph():
-	for a in atoms:
-		while a.neighbors.size() > MAX_NEIGHBORS:
-			var n = a.neighbors.pick_random()
-			a.neighbors.erase(n)
-			n.neighbors.erase(a)
-		
-	for a in atoms:
-		if a.neighbors.size() < MIN_NEIGHBORS:
-			var candidates = get_close_candidates(a)
-			if candidates.size() > 0:
-				var n = candidates.pick_random()
-				a.neighbors.append(n)
-				n.neighbors.append(a)
-				make_connection(a.position, n.position)
-				
+	var col_src  : CollisionShape3D = $Sample/Col   as CollisionShape3D
+	var en_src   : MeshInstance3D   = $Sample/En    as MeshInstance3D
+	var dis_src  : MeshInstance3D   = $Sample/Dis   as MeshInstance3D
 
-func get_close_candidates(a: Atom) -> Array:
-	var result := []
-	for b in atoms:
-		if b == a:
-			continue
-		if a.neighbors.has(b):
-			continue
-		if b.neighbors.size() >= MAX_NEIGHBORS:
-			continue
-		
-		if a.position.distance_to(b.position) <= CELL_SIZE * 1.1:
-			result.append(b)
-	return result
+	# 1. Spawn atoms
+	for y in range(GRID_SIZE.y):
+		var layer : Array = level_data[y]
+		for z in range(GRID_SIZE.z):
+			for x in range(GRID_SIZE.x):
+				var flat_idx : int = z * GRID_SIZE.x + x
+				if layer[flat_idx] == 0:
+					continue
+				var gpos := Vector3i(x, y, z)
+				var atom := Atom.new(col_src, en_src, dis_src)
+				atom.grid_pos = gpos
+				atom.position = Vector3(x, y, z) * CELL_SIZE
+				scene_root.add_child(atom)
+				grid[gpos] = atom
+				atoms.append(atom)
+				field.append(atom)
 
+	# 2. Connect neighbors (axis-aligned only, no diagonals)
+	var dirs := [
+		Vector3i(1,0,0), Vector3i(-1,0,0),
+		Vector3i(0,1,0), Vector3i(0,-1,0),
+		Vector3i(0,0,1), Vector3i(0,0,-1),
+	]
+	for atom in atoms:
+		for d in dirs:
+			var nb_pos = atom.grid_pos + d
+			if grid.has(nb_pos):
+				var nb : Atom = grid[nb_pos]
+				if not atom.neighbors.has(nb):
+					atom.neighbors.append(nb)
 
-func make_connection(from: Vector3, to: Vector3):
-	var c = $Sample/Conn.duplicate()
-	add_child(c)
-	c.position = (from + to) / 2.0
-	var dir = (to - from).normalized()
-	if abs(dir.dot(Vector3.UP)) > 0.99: return
-	c.mesh.height = (from - to).length()
-	c.look_at(to, Vector3.RIGHT)
-	c.rotate_z(deg_to_rad(90))
+	# 3. Draw connection meshes
+	for atom in atoms:
+		for nb in atom.neighbors:
+			if atom.get_index() < nb.get_index():
+				var c = _make_connection(atom.position, nb.position)
+				connections.append(c)
+				scene_root.add_child(c)
+	# 4. Randomise start state (so puzzle isn't trivially solved)
+	_randomise_start()
+	_center_scene()
+
+func _center_scene() -> void:
+	if atoms.is_empty():
+		return
+	
+	var centre := Vector3.ZERO
+	for atom in atoms:
+		centre += atom.position
+	centre /= atoms.size()
+	for atom in atoms:
+		atom.position -= centre
+	for conn in connections:
+		conn.position -= centre
+
+func _randomise_start() -> void:
+	randomize()
+	# Make 5-15 random swaps; this guarantees a solvable (but scrambled) state
+	var moves := randi_range(7, 25)
+	for _i in range(moves):
+		var atom : Atom = atoms[randi() % atoms.size()]
+		atom.swap()
+
+# ─────────────────────────────────────────────
+#  CONNECTION CYLINDER
+# ─────────────────────────────────────────────
+func _make_connection(from: Vector3, to: Vector3) -> MeshInstance3D:
+	var c : MeshInstance3D = $Sample/Conn.duplicate() as MeshInstance3D
+	#add_child(c)
+	var dir    := to - from
+	var length := dir.length()
+	dir = dir.normalized()
+	c.position   = (from + to) / 2.0
+	c.mesh       = c.mesh.duplicate()        # own copy so height is independent
+	(c.mesh as CylinderMesh).height = length
+	var up      := dir
+	var right   := up.cross(Vector3.FORWARD).normalized()
+	if right.length() < 0.001:
+		right = up.cross(Vector3.RIGHT).normalized()
+	var forward := right.cross(up)
+	c.transform.basis = Basis(right, up, forward)
+	return c
+
+# ─────────────────────────────────────────────
+#  FIELD CLEANUP
+# ─────────────────────────────────────────────
+func _clear_field() -> void:
+	for atom in atoms:
+		atom.queue_free()
+	for conn in connections:
+		conn.queue_free()
+	atoms       = []
+	field       = []
+	connections = []
+	grid        = {}
+
+# ─────────────────────────────────────────────
+#  ANIMATIONS
+# ─────────────────────────────────────────────
+
+# Win celebration: atoms pulse scale up/down twice, then a rainbow colour flash
+func _animate_win() -> Signal:
+	var tween := create_tween().set_parallel(true)
+	for atom in atoms:
+		tween.tween_property(atom, "scale", Vector3.ONE * 1.5, 0.18) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await tween.finished
+	var tween2 := create_tween().set_parallel(true)
+	for atom in atoms:
+		tween2.tween_property(atom, "scale", Vector3.ONE, 0.18) \
+			.set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+	await tween2.finished
+	return tween2.finished   # dummy, just so we can "await _animate_win()"
+
+# Exit: atoms fly outward from center and fade (scale to 0)
+func _animate_exit() -> void:
+	if atoms.is_empty():
+		return
+	# Compute centroid
+	var centre := Vector3.ZERO
+	for atom in atoms:
+		centre += atom.position
+	centre /= atoms.size()
+
+	var tween := create_tween().set_parallel(true)
+	for atom in atoms:
+		var dir = (atom.position - centre).normalized()
+		if dir.length_squared() < 0.001:
+			dir = Vector3(randf_range(-1,1), randf_range(-1,1), randf_range(-1,1)).normalized()
+		var target = atom.position + dir * 8.0
+		tween.tween_property(atom, "position", target, 0.45) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+		tween.tween_property(atom, "scale", Vector3.ZERO, 0.45) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	# Connections fade out together
+	for conn in connections:
+		tween.tween_property(conn, "scale", Vector3.ZERO, 0.3) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	await tween.finished
+
+# Enter: atoms fly in from random scatter positions, scale 0 → 1
+func _animate_enter() -> void:
+	if atoms.is_empty():
+		return
+	var centre := Vector3.ZERO
+	for atom in atoms:
+		centre += atom.position
+	centre /= atoms.size()
+
+	# Teleport atoms far away, scale zero, then tween to real position
+	for atom in atoms:
+		var dir = (atom.position - centre).normalized()
+		if dir.length_squared() < 0.001:
+			dir = Vector3(randf_range(-1,1), randf_range(-1,1), randf_range(-1,1)).normalized()
+		var start_pos = atom.position + dir * 10.0
+		var real_pos  = atom.position
+		atom.position = start_pos
+		atom.scale    = Vector3.ZERO
+		# Store real position for tween
+		atom.set_meta("_real_pos", real_pos)
+
+	# Stagger each atom slightly
+	var tween := create_tween().set_parallel(true)
+	for i in range(atoms.size()):
+		var atom : Atom = atoms[i]
+		var delay := i * 0.03
+		tween.tween_property(atom, "position", atom.get_meta("_real_pos"), 0.5) \
+			.set_delay(delay) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tween.tween_property(atom, "scale", Vector3.ONE, 0.5) \
+			.set_delay(delay) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# Connections pop in at the end
+	for conn in connections:
+		conn.scale = Vector3.ZERO
+		tween.tween_property(conn, "scale", Vector3.ONE, 0.3) \
+			.set_delay(atoms.size() * 0.03 + 0.1) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	await tween.finished

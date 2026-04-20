@@ -4,4 +4,8 @@
 export/
 *.VoxelGI_data.*
 *.exr
+*.exr*
+*.exr.*
 *.lmbake
+*.lmbake*
+*.lmbake.*
