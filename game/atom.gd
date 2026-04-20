@@ -38,7 +38,7 @@ func check_win():
 	print("WIN")
 	return true
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	pass
 
 func _input(event: InputEvent) -> void:
@@ -163,11 +163,9 @@ func get_close_candidates(a: Atom) -> Array:
 func make_connection(from: Vector3, to: Vector3):
 	var c = $Sample/Conn.duplicate()
 	add_child(c)
-	
 	c.position = (from + to) / 2.0
-	
 	var dir = (to - from).normalized()
-	var up = Vector3.RIGHT if abs(dir.dot(Vector3.UP)) > 0.99 else Vector3.UP
-	
-	c.look_at(to, up)
-	c.rotate_x(deg_to_rad(90))
+	if abs(dir.dot(Vector3.UP)) > 0.99: return
+	c.mesh.height = (from - to).length()
+	c.look_at(to, Vector3.RIGHT)
+	c.rotate_z(deg_to_rad(90))

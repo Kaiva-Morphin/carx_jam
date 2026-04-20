@@ -10,6 +10,7 @@ uniform float zFar = 10.0;
 
 uniform float width = 1.0;
 uniform bool addDepth = false;
+uniform float influence = 1.0;
 
 vec3 overlay(vec3 base, vec3 blend) {
     return mix(2.0 * base * blend, 
@@ -39,12 +40,14 @@ void fragment() {
 	float res = textureCavity(NORMAL_TEXTURE, SCREEN_UV, SCREEN_PIXEL_SIZE);
 	float scaled_depth = scaledDepth(DEPTH_TEXTURE, SCREEN_UV, INV_PROJECTION_MATRIX);
 	
+	vec3 effect;
 	if (addDepth) {
-		ALBEDO = overlay(overlay(origin.rgb, vec3(res)), vec3(scaled_depth));
+		effect = overlay(overlay(origin.rgb, vec3(res)), vec3(scaled_depth));
 	} else {
-		ALBEDO = overlay(origin.rgb, vec3(res));
+		effect = overlay(origin.rgb, vec3(res));
 		//ALBEDO = vec3(scaled_depth);
 	}
+	ALBEDO = mix(origin.rgb, effect, influence);
 }
 
 void vertex()

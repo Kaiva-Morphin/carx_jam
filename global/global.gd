@@ -8,11 +8,13 @@ var inspect_cam : Camera3D
 var inspect_node : Node3D
 var processor : Node3D
 var dbg_label : Label
+var subtitle : RichTextLabel
 
 enum UI_STATE {
 	GAME,
 	INSPECTING,
-	BOARD
+	BOARD,
+	DIALOG
 }
 
 var ui_state : UI_STATE
@@ -29,7 +31,8 @@ func update_debug():
 	for key in keys:
 		dbgs.append(key+" "+str(debug[key]))
 	dbgs.append("FPS:"+str(Engine.get_frames_per_second()))
-	dbg_label.text = "\n".join(dbgs)
+	if dbg_label:
+		dbg_label.text = "\n".join(dbgs)
 
 enum GameAct {
 	Intro,

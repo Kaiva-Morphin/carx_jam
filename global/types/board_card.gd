@@ -14,10 +14,18 @@ func inspect():
 			todo = true
 	if todo:
 		collected.append(tr("KEY_BOARD_NOT_ALL"))
-	return "\n".join(collected)
+	$New.hide()
+	return """[font otv="wght=800"]"""+"\n".join(collected)
+
+func unlock(i):
+	if i in unlocked: return
+	unlocked.append(i)
+	if len(unlocked) == len(data.descriptions):
+		$Unfinished.hide()
+	$New.show()
 
 func init():
-	$Title.text = data.title
+	$Title.text = """[font otv="wght=800"]"""+data.title
 	$Image.texture = RUMOR.image(data.image)
 
 func _init() -> void:
@@ -25,7 +33,6 @@ func _init() -> void:
 
 func show_image():
 	$Image.show()
-
 
 
 func focus():

@@ -22,13 +22,12 @@ enum STATES {STAND, WALK, RUN, INAIR, FALLING, CRUNCH, SLIDE, ONWALL}
 
 
 #region CONSTS
-var ACC_INAIR := 60.0
+var ACC_INAIR := 10.0
 var INAIR_DOT_FACTOR := 2.0
 var ACC_SPEED := 90.0
 var DEC_SPEED := 0.2
 var REDIR_AIR := 5.0
 var SLIDE_SPEED := ACC_SPEED * 1.3
-var MAX_AIRJUMPS := 0
 var CAMERA_INTERPOLATION_SPEED := 20.0
 var GRAVITY : float = ProjectSettings.get_setting("physics/3d/default_gravity")  * 4.5
 
@@ -37,9 +36,8 @@ var MAX_SLOPE_ANGLE := deg_to_rad(45.0)
 var MAX_COYOT_TIME = 0.1
 var JUMP_STRENGTH = 12.0
 var JUMP_BUFFER_TIME = 0.15
-var WALLJUMP_STRENGTH = 10.0
 
-var CRUNCH_SPEED := 5.0
+var CRUNCH_SPEED := 3.0
 var WALK_SPEED := 5.0
 var RUN_SPEED := 10.0
 var INAIR_SPEED := 5.0
@@ -53,7 +51,7 @@ var FOV_DT_SPEED := 5.0
 var BOB_FREQ = 1.9
 var BOB_AMP = 0.07
 var t_bob = 0.0
-var CRUNCH_BOB_AMP_MUL = 1.5
+var CRUNCH_BOB_AMP_MUL = 0.5
 var CRUNCH_BOB_MUL = 0.5
 var WALK_BOB_MUL = 1.0
 var RUN_BOB_MUL = 2.0
@@ -78,7 +76,6 @@ var jump_buffer = 0.0
 
 var processing_return = false
 func return_to_checkpoint():
-	if locked: return
 	if processing_return: return
 	processing_return = true
 
@@ -100,24 +97,15 @@ func _ready() -> void:
 	checkpoint = global_position
 	c_rot = self.rotation
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	#top_line.size.y = cinematic_lines_size
-	#bottom_line.size.y = cinematic_lines_size
-
-#var cinematic_lines = 0.0
-#var CINEMATIC_LINES_SPEED = 20.0
-#var cinematic_lines_size = 100.0
-#@onready var cinematic_root := $"../CanvasLayer/CinematicLines"
-#@onready var top_line := $"../CanvasLayer/CinematicLines/Top"
-#@onready var bottom_line := $"../CanvasLayer/CinematicLines/Bottom"
 
 func _process(_dt: float) -> void:
 	if Input.is_action_just_pressed("ui_right"):
 		if $Joint/PlayerCamera/ScreenFX/Outline2.visible:
 			$Joint/PlayerCamera/ScreenFX/Outline2.hide()
-			$Joint/PlayerCamera/ScreenFX/Outline4.show()
+			$Joint/PlayerCamera/ScreenFX/Outline5.show()
 		else:
 			$Joint/PlayerCamera/ScreenFX/Outline2.show()
-			$Joint/PlayerCamera/ScreenFX/Outline4.hide()
+			$Joint/PlayerCamera/ScreenFX/Outline5.hide()
 	dbg("FPS", Engine.get_frames_per_second())
 	head_bob(_dt)
 	#region FAV_LINES :D
@@ -131,7 +119,6 @@ func _process(_dt: float) -> void:
 	#cinematic_lines = clamp(cinematic_lines, 0., 1.)
 		#
 	#endregion
-	if locked: return
 	if global_position.y < -75.0:
 		return_to_checkpoint()
 	if !velocity.is_finite() || !global_position.is_finite():
@@ -162,24 +149,16 @@ func _process(_dt: float) -> void:
 
 
 var max_slope_angle := deg_to_rad(45.0)
-
-var inair_jumps := MAX_AIRJUMPS
 var input_dir := Vector2.ZERO
-
 var prev_camera_rotation := Vector3.INF
-
 var state : STATES = STATES.STAND
-
 var coyot_time = 0.0
 
-var locked = false
-
-
-
-
 var wall_normal : = Vector3.ZERO
+
+
+
 func _physics_process(_dt: float) -> void:
-	if locked: return
 	if Input.is_action_just_pressed("jump"):
 		jump_buffer = JUMP_BUFFER_TIME
 	else:
@@ -219,15 +198,6 @@ func _physics_process(_dt: float) -> void:
 		)
 		
 	camera.rotation_degrees = current_rotation
-	#var floor_normal := Vector3.UP
-	if is_on_floor():
-		#floor_normal = get_floor_normal()
-		inair_jumps = MAX_AIRJUMPS
-	#if direction != Vector3.ZERO && is_on_floor():
-		#dbg("ANG", floor_normal.angle_to(Vector3.UP))
-		#dbg("ANGM", max_slope_angle)
-		#if floor_normal.angle_to(Vector3.UP) > max_slope_angle:
-			#direction = direction.slide(floor_normal).normalized()
 	if Input.is_action_pressed("crunch") && states(STATES.STAND, STATES.WALK, STATES.RUN):
 		state = STATES.CRUNCH
 		crunch_collider.disabled = false
@@ -290,7 +260,7 @@ func _physics_process(_dt: float) -> void:
 				state = STATES.STAND
 				crunch_collider.disabled = true
 				stand_collider.disabled = false
-	handle_jump(_dt)
+	#handle_jump(_dt)
 	move_and_slide()
 	_push_rigid_bodies()
 
@@ -298,31 +268,18 @@ func _physics_process(_dt: float) -> void:
 @export var push_force: float = 1.0
 
 func _push_rigid_bodies():
-	# 1. Проходим по всем коллизиям за этот кадр
 	for i in range(get_slide_collision_count()):
 		var collision = get_slide_collision(i)
 		var collider = collision.get_collider()
-		
-		# 2. Проверяем, является ли объект тем, что мы хотим толкать (RigidBody3D)
 		if collider is RigidBody3D:
 			var rigid_body = collider as RigidBody3D
-			
-			# 3. Получаем нормаль столкновения и меняем её направление (отталкиваем от персонажа)
 			var push_direction = -collision.get_normal()
-			push_direction.y = 0  # Опционально: убираем вертикальную составляющую, чтобы объекты не взлетали
+			push_direction.y = 0
 			if push_direction.length() == 0:
-				continue # Если нормаль направлена строго вверх/вниз, пропускаем
-
-			# 4. Базовый импульс на основе нормали (простой способ)
-			# Передаем силу в зависимости от массы объекта и множителя
+				continue
 			var impulse_strength = push_force * (mass_kg / rigid_body.mass)
 			var impulse = push_direction * impulse_strength
-			
-			# 5. Применяем импульс к RigidBody
 			rigid_body.apply_central_impulse(impulse)
-			
-			# Альтернативный способ (более реалистичный) - см. следующий блок
-			# _apply_realistic_push(rigid_body, collision, push_direction)
 
 func head_bob(dt):
 	player_camera_joint.rotation.x = -clamp(lerp(player_camera_joint.rotation.x, velocity.y * 0.01, dt * 0.001), -1., 1.)
@@ -333,49 +290,20 @@ func head_bob(dt):
 	var bob_amp = BOB_AMP
 	if states(STATES.CRUNCH):
 		bob_amp *= CRUNCH_BOB_AMP_MUL 
-	player_camera.position.y = sin(t_bob * BOB_FREQ) * bob_amp
+	player_camera.position.y = sin(t_bob * BOB_FREQ) * bob_amp 
 	player_camera.position.x = cos(t_bob * BOB_FREQ * 0.5) * bob_amp * 0.3
 
-func handle_jump(dt):
+func handle_jump(_dt):
 	if states(STATES.CRUNCH): return
-	#dbg("CAN LEDGE", !ledge_check_high.has_overlapping_bodies() && ledge_check_low.get_collider())
-
-	#wall_normal = Vector3.ZERO
-	#var target = Vector3.ZERO
-	#
-	#var phys = PhysicsServer3D.space_get_direct_state(get_world_3d().space)
-	#for i in range(0, 360, 30):
-		#var ray = PhysicsRayQueryParameters3D.create(
-			#global_position, 
-			#global_position + Vector3(1, 0.5, 0).rotated(Vector3(0, 1, 0), deg_to_rad(i)), 1)
-		#var ray_coll = phys.intersect_ray(ray)
-		#if 'collider' in ray_coll.keys():
-			#target += ray_coll['normal']
-	#target = target.normalized()
-	#wall_normal = target
-	
 	if jump_buffer > 0.0:
-		#if target && !is_on_floor():
-			#velocity.y = JUMP_STRENGTH
-			#velocity += target * WALLJUMP_STRENGTH
-			#state = STATES.INAIR
-			#jump_buffer = 0.0
-			#inair_jumps = MAX_AIRJUMPS
-			#return
-		# coyote jump
 		if coyot_time < MAX_COYOT_TIME:
 			velocity.y = JUMP_STRENGTH
 			jump_buffer = 0.0
 			return
-		# air jump
-		elif inair_jumps > 0 and !is_on_floor():
-			inair_jumps -= 1
-			velocity.y = JUMP_STRENGTH
-			jump_buffer = 0.0
 
 var sensitivity := 0.005
+
 func _unhandled_input(event):
-	if locked: return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * sensitivity)
 		var target = -event.relative.y * sensitivity

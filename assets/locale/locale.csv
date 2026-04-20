@@ -1,2 +1,5 @@
 KEYS,ru_RU
+KEYS_BOARD,""
 KEY_BOARD_NOT_ALL,"[rainbow]Здесь еще есть что исследовать..."
+KEYS_VOICEOVER,""
+KEY_VOICELINE_MORTY_HELLO,"[rainbow freq=0.4]Привет, я морти"

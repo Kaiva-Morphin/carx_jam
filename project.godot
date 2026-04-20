@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="carx"
-run/main_scene="uid://cb0w6hnuphl7d"
+run/main_scene="uid://csdw14r703pi3"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -20,19 +20,24 @@ config/icon="res://icon.svg"
 GLOBAL="*uid://bwskpjxcs4gek"
 DIALOGS="*uid://i3470dxlad1n"
 RUMOR="*uid://d3ejptkj5ug07"
+VOICEOVER="*uid://52i18gunc1ff"
 
 [display]
 
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep_height"
+window/vsync/vsync_mode=0
+window/quality/msaa_3d=0
+window/quality/screen_space_aa=0
 
 [global_group]
 
 player=""
-player_interaction=""
 ladder=""
 interactible=""
 visual_hint=""
+player_attention=""
+inspectable_interactable=""
 
 [input]
 
@@ -151,6 +156,7 @@ locale/translations=PackedStringArray("res://assets/locale/locale.ru_RU.translat
 
 3d_physics/layer_2="ladder"
 3d_physics/layer_3="interactible"
+3d_physics/layer_4="inspectable_interactible"
 
 [physics]
 
@@ -160,12 +166,7 @@ common/physics_interpolation=true
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
-textures/canvas_textures/default_texture_repeat=1
 rendering_device/driver.windows="d3d12"
-lights_and_shadows/directional_shadow/size=8192
-lights_and_shadows/directional_shadow/soft_shadow_filter_quality=5
-lights_and_shadows/directional_shadow/soft_shadow_filter_quality.mobile=5
-lights_and_shadows/positional_shadow/soft_shadow_filter_quality=5
-lights_and_shadows/positional_shadow/soft_shadow_filter_quality.mobile=5
-anti_aliasing/quality/msaa_3d=1
-anti_aliasing/quality/use_debanding=true
+global_illumination/gi/use_half_resolution=true
+anti_aliasing/quality/msaa_3d=3
+anti_aliasing/quality/screen_space_aa=2

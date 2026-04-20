@@ -5,7 +5,9 @@ signal interaction_start
 signal interaction_end
 
 func _ready() -> void:
-	pass
+	add_to_group("interactible")
+	self.collision_layer = 4
+	self.collision_mask = 4
 
 func hint() -> String:
 	return ""

@@ -1,10 +1,5 @@
 extends Node3D
 
-enum iterrupter {
-	DIALOG
-}
-var interrupters = {}
-
 
 var ui_target_size
 func _ready():
@@ -22,16 +17,13 @@ func _on_size_changed():
 
 
 var inv_ui_scale = 1.0
-@onready var sc = $"../CanvasLayer/Dialog"
+@onready var sc = $"../CanvasLayer/CinematicLines"
 @onready var svc = $"../CanvasLayer/SubViewportContainer"
 @onready var svc2 = $"../CanvasLayer/Board/SubViewportContainer"
 func set_subviewport_size(size: Vector2):
 	var rs = sc.size
 	inv_ui_scale = ui_target_size.x / size.x
 	var ui_inv_scale2 = ui_target_size.y / size.y
-	GLOBAL.player.dbg("CS", $"../CanvasLayer/Dialog".size)
-	GLOBAL.player.dbg("RS", DisplayServer.window_get_size())
-	GLOBAL.player.dbg("IS2", ui_target_size) 
 	# это пиздец
 	if rs.x > ui_target_size.x :
 		svc.scale = Vector2(ui_inv_scale2, ui_inv_scale2)
@@ -39,13 +31,16 @@ func set_subviewport_size(size: Vector2):
 	else:
 		svc.scale = Vector2(inv_ui_scale, inv_ui_scale)
 		svc.position = Vector2(0.0, -size.y * 0.5 * inv_ui_scale + ui_target_size.y * 0.5)
-		GLOBAL.player.dbg("S", -size.y * 0.5)
 	$"../CanvasLayer/SubViewportContainer/SubViewport".size = size
 	$"../CanvasLayer/Board/SubViewportContainer/SubViewport".size = size
 	svc2.scale = svc.scale
 
 func _unhandled_input(event):
-	if event is InputEventMouseButton && GLOBAL.ui_state == GLOBAL.UI_STATE.GAME:
+	if event is InputEventMouseButton \
+		&& (GLOBAL.ui_state == GLOBAL.UI_STATE.GAME \
+		|| GLOBAL.ui_state == GLOBAL.UI_STATE.INSPECTING \
+		|| GLOBAL.ui_state == GLOBAL.UI_STATE.DIALOG
+		):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _notification(what):
@@ -54,9 +49,33 @@ func _notification(what):
 	#if what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
 		#Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
+var rotation_speed = 3.0
+var current_yaw: float = 0.0
+var current_pitch: float = 0.0
 func _process(_dt: float) -> void:
 	#var size = DisplayServer.window_get_size()
 	#set_subviewport_size(size)
+	if look_target:
+		var cam = GLOBAL.player.camera
+		var diff = cam.global_position - look_target.global_position
+		
+		# Целевые углы считаем напрямую, без промежуточного вектора
+		var target_yaw = atan2(diff.x, diff.z)
+		var target_pitch = -atan2(diff.y, Vector2(diff.x, diff.z).length())
+		target_pitch = clamp(target_pitch, -1.53, 1.53)
+		
+		var t = 1.0 - exp(-rotation_speed * _dt)
+		
+		# Интерполируем углы, а не вектор — нет рывков при смене цели
+		current_yaw = lerp_angle(current_yaw, target_yaw, t)
+		current_pitch = lerp_angle(current_pitch, target_pitch, t)
+		
+		GLOBAL.player.global_rotation.y = current_yaw
+		GLOBAL.player.camera.rotation.x = current_pitch
+	else:
+		# Сохраняем текущие углы, чтобы при следующем look_target не было рывка
+		current_yaw = GLOBAL.player.global_rotation.y
+		current_pitch = GLOBAL.player.camera.rotation.x
 	
 	if Input.is_action_just_pressed("unfocus"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -70,7 +89,7 @@ func _process(_dt: float) -> void:
 			blur_in()
 			board2d.fake_reset()
 			board.show()
-			board.process_mode = Node.PROCESS_MODE_INHERIT
+			# board.process_mode = Node.PROCESS_MODE_INHERIT
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			GLOBAL.block_player()
 		elif GLOBAL.ui_state == GLOBAL.UI_STATE.BOARD:
@@ -87,13 +106,12 @@ func _process(_dt: float) -> void:
 			GLOBAL.hint_node.text = c.hint()
 			if Input.is_action_just_pressed("interact"):
 				c.interact()
-				GLOBAL.ui_state = GLOBAL.UI_STATE.INSPECTING
 
 
 func close_tab():
 	blur_out()
 	board.hide()
-	board.process_mode = Node.PROCESS_MODE_DISABLED
+	# board.process_mode = Node.PROCESS_MODE_DISABLED
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	GLOBAL.unblock_player()
 
@@ -108,3 +126,14 @@ func blur_in():
 
 func blur_out():
 	$"../CanvasLayer/BlurPlayer".play("blur_out")
+
+func cinematic_in():
+	$"../CanvasLayer/CinematicPlayer".play("in")
+
+func cinematic_out():
+	$"../CanvasLayer/CinematicPlayer".play("out")
+
+var look_target = null
+
+func player_look(target):
+	look_target = target

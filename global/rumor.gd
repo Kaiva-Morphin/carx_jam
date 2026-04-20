@@ -89,7 +89,6 @@ func _update_hearing(key: String):
 		var cond = data.descriptions[i].cond
 		if knowledge.get(cond, false):
 			if cond in data.image_cond:
-				prints(cond, data.image_cond)
 				emit_signal("image_discovered", key)
 			state.descriptions[i] = true
 			any_unlocked = true

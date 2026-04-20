@@ -81,12 +81,6 @@ var cards = {
 	
 }
 
-func on_hearing(k):
-	var c = cards.get(k)
-	if c:
-		return
-	discover_card(k)
-
 func discover_card(k) -> BoardCard:
 	var raw_data = RUMOR.hearings_data[k]
 	var card = spawn_card(raw_data.position)
@@ -95,78 +89,52 @@ func discover_card(k) -> BoardCard:
 	cards[k] = card
 	return card
 
-func on_image_discovered(k):
-	var c : BoardCard = cards.get(k)
-	if c:
-		c.show_image()
+
+
+func on_hearing(k):
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+		pending_events.append({ "type": EventType.HEARING, "key": k })
 	else:
-		var card = discover_card(k)
-		card.show_image()
+		_apply_hearing(k)
+
+func on_image_discovered(k):
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+		pending_events.append({ "type": EventType.IMAGE, "key": k })
+	else:
+		_apply_image(k)
 
 func on_description(k, i):
-	var c : BoardCard = cards.get(k)
-	if c:
-		c.unlocked.append(i)
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+		pending_events.append({ "type": EventType.DESCRIPTION, "key": k, "index": i })
 	else:
-		var card = discover_card(k)
-		card.unlocked.append(i)
+		_apply_description(k, i)
 
 func on_connection(f, t, d):
-	var pos = []
-	for i in [f, t]:
-		var c = cards.get(i)
-		if c:
-			pos.append(c.position)
-			continue
-		var raw_data = RUMOR.hearings_data[i]
-		var card = spawn_card(raw_data.position)
-		card.data = raw_data
-		card.init()
-		pos.append(raw_data.position)
-		cards[i] = card
-	make_rope(pos[0], pos[1], d)
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+		pending_events.append({ "type": EventType.CONNECTION, "from": f, "to": t, "desc": d })
+	else:
+		_apply_connection(f, t, d)
 
 func get_text(c):
 	return c.inspect()
 
 var hover_null_timer: float = 0.0
-var hover_null_delay: float = 0.15  # секунд, подбери под себя
+var hover_null_delay: float = 0.15
 
 func _process(dt: float) -> void:
+	RUMOR.add_knowledge("located_signal")
+	RUMOR.add_knowledge("found_signal")
 	RUMOR.add_knowledge("visited_planet_x")
-	if GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD: return
-	handle_cam(dt)
-
-	var space_state = get_world_2d().direct_space_state
-	var params = PhysicsPointQueryParameters2D.new()
-	params.position = get_global_mouse_position()
-	params.collide_with_areas = true
-	params.collide_with_bodies = false
-
-	var result = space_state.intersect_point(params)
-	if result:
-		hover_null_timer = 0.0  # сбрасываем таймер — что-то под курсором есть
-
-		var pn = null
-		var pnv = 0
-		for r in result:
-			var a : Area2D = r.collider
-			if pn == null || a.priority > pnv:
-				pn = a
-				pnv = a.priority
-
-		if hovered != pn:
-			if hovered:
-				hovered.unfocus()
-			hovered = pn
-			hovered.focus()
+	var is_board = GLOBAL.ui_state == GLOBAL.UI_STATE.BOARD
+	if is_board and !was_board: _on_enter_board()
+	was_board = is_board
+	if !is_board: return
+	_on_enter_board()
+	if cinematic_active:
+		_tick_cinematic(dt)
 	else:
-		hover_null_timer += dt
-		if hover_null_timer >= hover_null_delay:
-			if hovered:
-				hovered.unfocus()
-				hovered = null
-
+		handle_cam(dt)
+	_handle_hover(dt)
 	request(hovered)
 
 var current = null
@@ -238,6 +206,7 @@ func handle_cam(dt):
 	cam.position = cam.position.lerp(target_pos, t)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if cinematic_active: return
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			dragging = event.pressed
@@ -268,3 +237,217 @@ func change_zoom(amount: float, mouse_screen_pos: Vector2) -> void:
 	var world_before = target_pos + mouse_offset / old_zoom
 	var world_after  = target_pos + mouse_offset / new_zoom
 	target_pos += world_before - world_after
+
+enum EventType { HEARING, IMAGE, DESCRIPTION, CONNECTION }
+
+var pending_events: Array = []  # события пока не в BOARD
+var cinematic_queue: Array = []  # текущая очередь для воспроизведения
+var cinematic_active := false
+var was_board := false
+
+func _apply_hearing(k) -> BoardCard:
+	if cards.get(k): return cards[k]
+	return discover_card(k)
+
+func _apply_image(k):
+	var c: BoardCard = cards.get(k)
+	if c: c.show_image()
+	else: discover_card(k).show_image()
+
+func _apply_description(k, i):
+	var c: BoardCard = cards.get(k)
+	if c: c.unlock(i)
+	else: discover_card(k).unlock(i)
+
+func _apply_connection(f, t, d):
+	var pos = []
+	for i in [f, t]:
+		var c = cards.get(i)
+		if c: pos.append(c.position); continue
+		var raw = RUMOR.hearings_data[i]
+		var card = spawn_card(raw.position)
+		card.data = raw; card.init()
+		pos.append(raw.position)
+		cards[i] = card
+	make_rope(pos[0], pos[1], d)
+
+func _on_enter_board():
+	if pending_events.is_empty(): return
+	cinematic_queue = _build_cinematic_sequence(pending_events.duplicate())
+	pending_events.clear()
+	_start_cinematic()
+
+func _build_cinematic_sequence(events: Array) -> Array:
+	var sequence = []
+	
+	# Сначала — все новые карты (HEARING), которых ещё нет
+	var new_cards = []
+	for e in events:
+		if e.type == EventType.HEARING and !cards.get(e.key):
+			new_cards.append(e.key)
+	
+	# Группируем descriptions по ключу
+	var descs_by_key = {}
+	for e in events:
+		if e.type == EventType.DESCRIPTION:
+			if !descs_by_key.has(e.key): descs_by_key[e.key] = []
+			descs_by_key[e.key].append(e.index)
+	
+	var images = []
+	for e in events:
+		if e.type == EventType.IMAGE: images.append(e.key)
+	
+	var connections = []
+	for e in events:
+		if e.type == EventType.CONNECTION: connections.append(e)
+	
+	# Собираем узлы к посещению — те у которых есть что показать
+	var visited_keys = {}
+	
+	# Новые карточки
+	for k in new_cards:
+		visited_keys[k] = true
+		var step = { "action": "visit_card", "key": k, "apply": [] }
+		step.apply.append({ "type": EventType.HEARING, "key": k })
+		if descs_by_key.has(k):
+			for i in descs_by_key[k]:
+				step.apply.append({ "type": EventType.DESCRIPTION, "key": k, "index": i })
+			descs_by_key.erase(k)
+		if k in images:
+			step.apply.append({ "type": EventType.IMAGE, "key": k })
+			images.erase(k)
+		sequence.append(step)
+	
+	# Карты с новыми описаниями (уже существующие)
+	for k in descs_by_key:
+		var step = { "action": "visit_card", "key": k, "apply": [] }
+		for i in descs_by_key[k]:
+			step.apply.append({ "type": EventType.DESCRIPTION, "key": k, "index": i })
+		if k in images:
+			step.apply.append({ "type": EventType.IMAGE, "key": k })
+			images.erase(k)
+		sequence.append(step)
+	
+	# Оставшиеся images
+	for k in images:
+		var step = { "action": "visit_card", "key": k, "apply": [] }
+		step.apply.append({ "type": EventType.IMAGE, "key": k })
+		sequence.append(step)
+	
+	# Связи в конце
+	for e in connections:
+		sequence.append({ "action": "visit_connection", "event": e })
+	
+	# Финал — отдалить и вернуть управление
+	sequence.append({ "action": "finish" })
+	return sequence
+
+# --- Кинематограф ---
+var cinematic_step := 0
+var cinematic_timer := 0.0
+const FLY_DURATION    := 1.0   # секунд на перелёт
+const LINGER_DURATION := 1.0   # секунд стоять у объекта
+
+func _start_cinematic():
+	cinematic_active = true
+	cinematic_step = 0
+	cinematic_timer = 0.0
+	fake_reset()  # влетаем издалека
+	_run_step()
+
+func _run_step():
+	if cinematic_step >= cinematic_queue.size():
+		_end_cinematic()
+		return
+	
+	var step = cinematic_queue[cinematic_step]
+	
+	match step.action:
+		"visit_card":
+			var k = step.key
+			# Применяем создание карты немедленно, остальное — после прилёта
+			if !cards.get(k):
+				_apply_hearing(k)
+			var card: BoardCard = cards[k]
+			_fly_to(card.position, -1.0)  # -1.0 = log2(0.5), зум ×0.5
+			cinematic_timer = FLY_DURATION
+		
+		"visit_connection":
+			var e = step.event
+			# Применяем связь сразу (нужны позиции обеих карт)
+			_apply_connection(e.from, e.to, e.desc)
+			var mid = _connection_midpoint(e.from, e.to)
+			_fly_to(mid, -1.5)
+			cinematic_timer = FLY_DURATION
+		
+		"finish":
+			_fly_to(Vector2.ZERO, -2.0)
+			cinematic_timer = 0.0 # FLY_DURATION + 0.1
+
+func _apply_step_effects(step: Dictionary):
+	if !step.has("apply"): return
+	for a in step.apply:
+		match a.type:
+			EventType.DESCRIPTION: _apply_description(a.key, a.index)
+			EventType.IMAGE:       _apply_image(a.key)
+
+func _connection_midpoint(f, t) -> Vector2:
+	var pf = cards[f].position if cards.has(f) else RUMOR.hearings_data[f].position
+	var pt = cards[t].position if cards.has(t) else RUMOR.hearings_data[t].position
+	return (pf + pt) * 0.5
+
+func _fly_to(world_pos: Vector2, zoom_log: float):
+	target_pos = world_pos
+	log_zoom_target = zoom_log
+
+# Обновление кинематографа — вызывается из _process
+func _tick_cinematic(dt: float):
+	if !cinematic_active: return
+	handle_cam(dt)  # камера всё равно интерполируется
+	
+	cinematic_timer -= dt
+	if cinematic_timer > 0.0: return
+	
+	var step = cinematic_queue[cinematic_step]
+	if step.action == "finish":
+		_end_cinematic()   # ← прилетели — сразу отдаём управление
+		return
+	# Прилетели — применяем эффекты и ждём LINGER
+	if cinematic_timer > -LINGER_DURATION:
+		_apply_step_effects(step)
+		return
+	
+	# Отстояли — следующий шаг
+	cinematic_step += 1
+	cinematic_timer = 0.0
+	_run_step()
+
+func _end_cinematic():
+	cinematic_active = false
+	log_zoom_target = -2.0
+
+func _handle_hover(dt: float):
+	if cinematic_active:
+		if hovered: hovered.unfocus(); hovered = null
+		return
+	
+	var space_state = get_world_2d().direct_space_state
+	var params = PhysicsPointQueryParameters2D.new()
+	params.position = get_global_mouse_position()
+	params.collide_with_areas = true
+	params.collide_with_bodies = false
+
+	var result = space_state.intersect_point(params)
+	if result:
+		hover_null_timer = 0.0
+		var pn = null; var pnv = 0
+		for r in result:
+			var a: Area2D = r.collider
+			if pn == null || a.priority > pnv: pn = a; pnv = a.priority
+		if hovered != pn:
+			if hovered: hovered.unfocus()
+			hovered = pn; hovered.focus()
+	else:
+		hover_null_timer += dt
+		if hover_null_timer >= hover_null_delay:
+			if hovered: hovered.unfocus(); hovered = null
