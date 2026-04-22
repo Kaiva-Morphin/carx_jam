@@ -132,7 +132,7 @@ func _process(_dt: float) -> void:
 			var h = c.hint()
 			if h != "":
 				GLOBAL.hints.center_hint(c.hint_keymap(), h)
-			if Input.is_action_just_pressed("interact"):
+			if Input.is_action_just_pressed(c.hint_keymap()):
 				GLOBAL.hints.rm_center_hint()
 				c.interact()
 	if !keep && GLOBAL.ui_state == GLOBAL.UI_STATE.GAME:

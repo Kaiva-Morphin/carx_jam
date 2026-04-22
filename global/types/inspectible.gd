@@ -5,9 +5,12 @@ class_name Inspectable
 @onready var object = $Object
 @onready var object_mesh : MeshInstance3D = $Object/Object
 @onready var prop = $Prop
+@export var child_hint : bool  = false
 
 func _ready() -> void:
 	add_to_group("interactible")
+	if child_hint:
+		need_hint_ = false
 	super._ready()
 	interaction_end.connect(GLOBAL.unblock_player)
 	if object_mesh:

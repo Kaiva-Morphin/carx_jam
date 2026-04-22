@@ -26,5 +26,8 @@ func _on_body_entered(body: Node3D) -> void:
 
 func _on_body_exited(body: Node3D) -> void:
 	if !body.is_in_group("player"): return
+	if papa_shown:
+		papa_shown = false
+		GLOBAL.processor.papa_out()
 	can_papa = false
 	GLOBAL.hints.rm_hint("show_papa")

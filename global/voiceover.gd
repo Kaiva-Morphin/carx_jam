@@ -5,6 +5,10 @@ const path = "res://assets/voiceover_silence/"
 
 var voiceparts = {
 	#region mono
+	"ride" : {
+		"voice" : preload(path + "ride.mp3"),
+		"text": "KEY_MONO_RIDE",
+	},
 	"mono_act1" : {
 		"voice" : preload(path + "mono_act1.mp3"),
 		"text": "KEY_MONO_ACT1",
@@ -117,6 +121,10 @@ var voiceparts = {
 		"voice" : preload(path + "mono_safe_key.mp3"),
 		"text": "KEY_MONO_SAFE_KEY",
 	},
+	"mono_main_entrance" : {
+		"voice" : preload(path + "mono_main_entrance.mp3"),
+		"text": "KEY_MONO_SAFE_KEY",
+	},
 
 	#endregion mono
 
@@ -136,6 +144,7 @@ var voiceparts = {
 
 var sequences = {
 	#region mono
+	"ride": ["ride"],
 	"mono_bio_blood": ["mono_bio_blood"],
 	"mono_act1": ["mono_act1"],
 	"mono_mail": ["mono_mail"],
@@ -187,6 +196,13 @@ var running = false
 var current_key = "test"
 var sequence_text_size = 0
 
+var pushed = null
+func push_sequence(k):
+	if !current_voiceline:
+		start_sequence(k)
+	else:
+		pushed = k
+
 func _init() -> void:
 	for k in voiceparts:
 		var p = AudioStreamPlayer.new()
@@ -221,6 +237,10 @@ func sequence_next():
 		running = false
 		GLOBAL.subtitle.visible_characters = 0
 		GLOBAL.subtitle.text = ""
+		if pushed:
+			auto_next = true
+			start_sequence(pushed)
+			pushed = null
 		return
 	var next = sequence.pop_front()
 	var data = voiceparts[next]
