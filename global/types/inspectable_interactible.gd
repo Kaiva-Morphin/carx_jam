@@ -9,4 +9,4 @@ func _ready() -> void:
 	add_to_group("inspectable_interactible")
 
 func interact():
-	pass
+	super.interact()

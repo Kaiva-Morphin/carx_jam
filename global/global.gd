@@ -13,6 +13,7 @@ var subtitle_progress : ColorRect
 var inspect_cam_joint : Node3D
 var hints : MarginContainer
 var visual_hint = preload("res://game/visual_hint.tscn")
+var subtitle_bg : TextureRect
 
 enum UI_STATE {
 	GAME,

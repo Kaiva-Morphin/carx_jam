@@ -13,9 +13,9 @@ var voiceparts = {
 		"voice" : preload(path + "mono_mail.mp3"),
 		"text": "KEY_MONO_MAIL",
 	},
-	"mono_main_entrance" : {
-		"voice" : preload(path + "mono_main_entrance.mp3"),
-		"text": "KEY_MONO_MAIN_ENTRANCE",
+	"mono_bio_blood" : {
+		"voice" : preload(path + "mono_bio_blood.mp3"),
+		"text": "KEY_MONO_BIO_BLOOD",
 	},
 	"mono_hallway" : {
 		"voice" : preload(path + "mono_hallway.mp3"),
@@ -28,6 +28,10 @@ var voiceparts = {
 	"mono_living_bottles_done" : {
 		"voice" : preload(path + "mono_living_bottles_done.mp3"),
 		"text": "KEY_MONO_LIVING_BOTTLES_DONE",
+	},
+	"mono_demyan_room_table" : {
+		"voice" : preload(path + "mono_demyan_room_table.mp3"),
+		"text": "KEY_MONO_DEMYAN_ROOM_TABLE",
 	},
 	"mono_living_cig" : {
 		"voice" : preload(path + "mono_living_cig.mp3"),
@@ -105,6 +109,15 @@ var voiceparts = {
 		"voice" : preload(path + "mono_attic_photo.mp3"),
 		"text": "KEY_MONO_ATTIC_PHOTO",
 	},
+	"mono_father_room" : {
+		"voice" : preload(path + "mono_father_room.mp3"),
+		"text": "KEY_MONO_FATHER_ROOM",
+	},
+	"mono_safe_key": {
+		"voice" : preload(path + "mono_safe_key.mp3"),
+		"text": "KEY_MONO_SAFE_KEY",
+	},
+
 	#endregion mono
 
 	"morty_hello" : {
@@ -123,11 +136,13 @@ var voiceparts = {
 
 var sequences = {
 	#region mono
+	"mono_bio_blood": ["mono_bio_blood"],
 	"mono_act1": ["mono_act1"],
 	"mono_mail": ["mono_mail"],
 	"mono_main_entrance": ["mono_main_entrance"],
 	"mono_hallway": ["mono_hallway"],
 	"mono_living_bottles": ["mono_living_bottles"],
+	"mono_living_bottles_done": ["mono_living_bottles_done"],
 	"mono_living_cig": ["mono_living_cig"],
 	"mono_living_photo": ["mono_living_photo"],
 	"mono_safe": ["mono_safe"],
@@ -142,11 +157,14 @@ var sequences = {
 	"mono_books": ["mono_books"],
 	"mono_drawings": ["mono_drawings"],
 	"mono_room": ["mono_room"],
+	"mono_father_room": ["mono_father_room"],
 	"mono_father_safe": ["mono_father_safe"],
 	"mono_suitcase": ["mono_suitcase"],
 	"mono_flask": ["mono_flask"],
 	"mono_box": ["mono_box"],
 	"mono_attic_photo": ["mono_attic_photo"],
+	"mono_demyan_room_table": ["mono_demyan_room_table"],
+	"mono_safe_key": ["mono_safe_key"],
 	#endregion mono
 
 	"test": [],
@@ -181,7 +199,6 @@ func start_sequence(key):
 		current_voiceline.stop()
 		current_voiceline = null
 		sequence_end.emit(current_key)
-		auto_next = false
 		running = false
 		GLOBAL.subtitle.visible_characters = 0
 		GLOBAL.subtitle.text = ""
@@ -226,7 +243,10 @@ var loss = 1.5
 var ended = false
 func _process(_dt):
 	if !GLOBAL.processor: return
+	if running:
+		GLOBAL.subtitle_bg.modulate.a = lerp(GLOBAL.subtitle_bg.modulate.a, 1.0, _dt * 10.0)
 	if !running:
+		GLOBAL.subtitle_bg.modulate.a = lerp(GLOBAL.subtitle_bg.modulate.a, 0.0, _dt * 10.0)
 		GLOBAL.processor.set_subtitle_skip_progress(0.0)
 		return
 	current_progress += gps * _dt

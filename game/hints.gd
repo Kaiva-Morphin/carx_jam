@@ -16,11 +16,11 @@ func _ready():
 	sample.process_mode = Node.PROCESS_MODE_DISABLED
 	sample.hide()
 	GLOBAL.hints = self
-	var e = InputMap.action_get_events("zoom_in")
 
 var center_key = "UNK"
 var center_label = "UNK"
 func center_hint(keymap, label):
+	if label == "": return
 	$HintCenter.show()
 	if center_key == keymap:
 		if center_label == label:

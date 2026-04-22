@@ -18,7 +18,7 @@ func _ready() -> void:
 	self.collision_mask = 4
 	_hint_node = GLOBAL.visual_hint.instantiate()
 	add_child(_hint_node)
-	_hint_node.position.y = 1.0
+	_hint_node.position.y = 0.0
 
 func hint() -> String:
 	if one_shoot && shooted: return ""

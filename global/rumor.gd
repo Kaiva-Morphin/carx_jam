@@ -101,6 +101,7 @@ enum RumorImage {
 	BREAK_IN,
 	SNEAKERS,
 	BIO_1,
+	BIO_3,
 	MISSING_BOTTLE,
 	MAIL,
 	CIG,
@@ -110,6 +111,7 @@ enum RumorImage {
 	LETTER,
 	DRAWINGS,
 	PASSPORT,
+	DEMYAN_TABLE,
 	FLASK,
 	PHOTO
 	#endregion mono
@@ -134,6 +136,17 @@ var hearings_data = {
 			"image_cond": ["original_board"],
 			"position": Vector2(-800, 1300)
 		},
+		"FATHER": {
+			"title": "KEY_BOARD_FATHER_TITLE",
+			"descriptions": [
+				{ "text": "KEY_BOARD_FATHER1", "cond": "docs" },
+				{ "text": "KEY_BOARD_FATHER2", "cond": "passport" },
+			],
+			"connections": [{"to": "MURDER", "description": "todo", "cond": "original_board"}],
+			"image": RumorImage.UNK,
+			"image_cond": ["original_board"],
+			"position": Vector2(-400, -400)
+		},
 		#region initial
 		"MURDER": {
 			"title": "KEY_BOARD_MURDER_TITLE",
@@ -142,7 +155,7 @@ var hearings_data = {
 				{ "text": "KEY_BOARD_MURDER2", "cond": "original_board" },
 				{ "text": "KEY_BOARD_MURDER3", "cond": "original_board" },
 			],
-			"connections": [],
+			"connections": [{"to": "BIO_3", "description": "KEY_BOARD_MISSING_BOTTLE2", "cond": "bio3"}],
 			"image": RumorImage.MURDER,
 			"image_cond": [],
 			"position": Vector2(0, 0)
@@ -210,21 +223,70 @@ var hearings_data = {
 			"image_cond": ["sneakers"],
 			"position": Vector2(-1000, 600)
 		},
+
+		"BIO_ROOT": {
+			"title": "KEY_BOARD_BIO_ROOT_TITLE",
+			"descriptions": [
+				{ "text": "KEY_BOARD_BIO_ROOT1", "cond": "original_board" },
+				{ "text": "KEY_BOARD_BIO_ROOT2", "cond": "bio1" },
+				{ "text": "KEY_BOARD_BIO_ROOT3", "cond": "cig" },
+				{ "text": "KEY_BOARD_BIO_ROOT4", "cond": "bio3" }
+			],
+			"connections": [
+				{"to": "BIO_1", "cond": "bio1_checked", "description": "bio1"},
+				{"to": "CIG", "cond": "bio1_checked", "description": "cig"},
+				{"to": "BIO_3", "cond": "bio1_checked", "description": "bio3"}
+			],
+			"image": RumorImage.LETTER,
+			"image_cond": [],
+			"position": Vector2(600, 1300)
+		},
+
 		"BIO_1": {
 			"title": "KEY_BOARD_BIO1_TITLE",
-			"descriptions": [{ "text": "KEY_BOARD_BIO_1", "cond": "bio1" }],
-			"connections": [],
+			"descriptions": [
+				{ "text": "KEY_BOARD_BIO11", "cond": "bio1" },
+				{ "text": "KEY_BOARD_BIO12", "cond": "bio1_checked" },
+			],
+			"connections": [{"to": "UNK", "cond": "bio1_checked", "description": "KEY_BOARD_BIO12"}],
 			"image": RumorImage.BIO_1,
 			"image_cond": [],
-			"position": Vector2(-3000, 800)
+			"position": Vector2(1000, 600)
+		},
+		"CIG": {
+			"title": "KEY_BOARD_CIG_TITLE",
+			"descriptions": [{ "text": "KEY_BOARD_CIG1", "cond": "cig" }],
+			"connections": [],
+			"image": RumorImage.CIG,
+			"image_cond": [],
+			"position": Vector2(1000, 1300)
+		},
+		"BIO_3": {
+			"title": "KEY_BOARD_BIO_3_TITLE",
+			"descriptions": [{ "text": "KEY_BOARD_BIO_31", "cond": "bio3" }],
+			"connections": [],
+			"image": RumorImage.BIO_3,
+			"image_cond": [],
+			"position": Vector2(1000, 1800)
 		},
 		"MISSING_BOTTLE": {
 			"title": "KEY_BOARD_MISSING_BOTTLE_TITLE",
-			"descriptions": [{ "text": "KEY_BOARD_MISSING_BOTTLE", "cond": "missing_bottle" }],
-			"connections": [],
-			"image": RumorImage.MISSING_BOTTLE,
+			"descriptions": [
+				{ "text": "KEY_BOARD_MISSING_BOTTLE1", "cond": "missing_bottle" },
+				{ "text": "KEY_BOARD_MISSING_BOTTLE2", "cond": "bio3_checked" },
+			],
+			"connections": [{"to": "BIO_3", "description": "KEY_BOARD_MISSING_BOTTLE2", "cond": "bio3_checked"}],
+			"image": RumorImage.MISSING_BOTTLE, 
 			"image_cond": [],
-			"position": Vector2(-3000, 1000)
+			"position": Vector2(500, 2200)
+		},
+		"DEMYAN_ROOM_TABLE": {
+			"title": "KEY_BOARD_DEMYAN_TABLE_TITLE",
+			"descriptions": [{ "text": "KEY_BOARD_DEMYAN_TABLE1", "cond": "demyan_table" }],
+			"connections": [{"description": "KEY_BOARD_DEMYAN_MONEY_CONN", "cond": "demyan_table", "to": "FATHER_MONEY" }],
+			"image": RumorImage.DEMYAN_TABLE,
+			"image_cond": [],
+			"position": Vector2(1300, 000)
 		},
 		"MAIL": {
 			"title": "KEY_BOARD_MAIL_TITLE",
@@ -234,37 +296,29 @@ var hearings_data = {
 			"image_cond": [],
 			"position": Vector2(-3000, 1200)
 		},
-		"CIG": {
-			"title": "KEY_BOARD_CIG_TITLE",
-			"descriptions": [{ "text": "KEY_BOARD_CIG", "cond": "cig" }],
-			"connections": [],
-			"image": RumorImage.CIG,
-			"image_cond": [],
-			"position": Vector2(-3000, 1400)
-		},
 		"SAFE": {
 			"title": "KEY_BOARD_SAFE_TITLE",
 			"descriptions": [{ "text": "KEY_BOARD_SAFE", "cond": "safe" }],
-			"connections": [],
+			"connections": [{"description": "", "cond": "safe", "to": "PASSPORT"}],
 			"image": RumorImage.SAFE,
 			"image_cond": [],
-			"position": Vector2(-3000, 1600)
+			"position": Vector2(-400, -1200)
+		},
+		"PASSPORT": {
+			"title": "KEY_BOARD_PASSPORT_TITLE",
+			"descriptions": [{ "text": "KEY_BOARD_PASSPORT", "cond": "passport" }],
+			"connections": [{"description": "", "cond": "passport", "to": "FATHER"}],
+			"image": RumorImage.PASSPORT,
+			"image_cond": [],
+			"position": Vector2(100, -900)
 		},
 		"DOCUMENTS": {
 			"title": "KEY_BOARD_DOCS_TITLE",
-			"descriptions": [{ "text": "KEY_BOARD_DOCS", "cond": "docs" }],
-			"connections": [],
+			"descriptions": [{ "text": "KEY_BOARD_DOCS1", "cond": "docs" }],
+			"connections": [{"description": "TODO", "cond": "docs", "to": "FATHER"}],
 			"image": RumorImage.DOCUMENTS,
 			"image_cond": [],
-			"position": Vector2(-3000, 1800)
-		},
-		"BIO_2": {
-			"title": "KEY_BOARD_BIO_2_TITLE",
-			"descriptions": [{ "text": "KEY_BOARD_BIO_2", "cond": "bio2" }],
-			"connections": [],
-			"image": RumorImage.BIO_2,
-			"image_cond": [],
-			"position": Vector2(-3000, 2000)
+			"position": Vector2(-800, -600)
 		},
 		"LETTER": {
 			"title": "KEY_BOARD_LETTER_TITLE",
@@ -276,35 +330,29 @@ var hearings_data = {
 		},
 		"DRAWINGS": {
 			"title": "KEY_BOARD_DRAWINGS_TITLE",
-			"descriptions": [{ "text": "KEY_BOARD_DRAWINGS", "cond": "drawings" }],
+			"descriptions": [
+				{ "text": "KEY_BOARD_DRAWINGS", "cond": "drawings" }
+			],
 			"connections": [],
 			"image": RumorImage.DRAWINGS,
 			"image_cond": [],
-			"position": Vector2(-3000, 2400)
-		},
-		"PASSPORT": {
-			"title": "KEY_BOARD_PASSPORT_TITLE",
-			"descriptions": [{ "text": "KEY_BOARD_PASSPORT", "cond": "passport" }],
-			"connections": [],
-			"image": RumorImage.PASSPORT,
-			"image_cond": [],
-			"position": Vector2(-3000, 2600)
+			"position": Vector2(-400, 2000)
 		},
 		"FLASK": {
 			"title": "KEY_BOARD_FLASK_TITLE",
 			"descriptions": [{ "text": "KEY_BOARD_FLASK", "cond": "flask" }],
-			"connections": [],
+			"connections": [{"to": "FATHER", "description": "", "cond": "flask"}],
 			"image": RumorImage.FLASK,
 			"image_cond": [],
-			"position": Vector2(-3000, 2800)
+			"position": Vector2(-300, 300)
 		},
 		"PHOTO": {
 			"title": "KEY_BOARD_PHOTO_TITLE",
 			"descriptions": [{ "text": "KEY_BOARD_PHOTO", "cond": "photo" }],
-			"connections": [],
+			"connections": [{"to": "FATHER", "description": "", "cond": "photo"}],
 			"image": RumorImage.PHOTO,
 			"image_cond": [],
-			"position": Vector2(-3000, 3000)
+			"position": Vector2(-700, 100)
 		}
 		#endregion mono
 	}

@@ -55,9 +55,9 @@ func make_rope(from: Vector2, to: Vector2, desc: String) -> void:
 		to + normal
 	])
 
-	var shape = CollisionPolygon2D.new()
-	shape.polygon = poly
-	area.add_child(shape)
+	# var shape = CollisionPolygon2D.new()
+	# shape.polygon = poly
+	# area.add_child(shape)
 
 var hovered : BoardInspectable = null
 
