@@ -1,8 +1,15 @@
 extends Node3D
 
+func lab_end():
+	GLOBAL.player.camera.current = true
+	GLOBAL.game_act = GLOBAL.GameAct.Final
+	GLOBAL.ui_state = GLOBAL.UI_STATE.GAME
+	GLOBAL.unblock_player()
+	$"../Atom".process_mode = Node.PROCESS_MODE_DISABLED
 
 var ui_target_size
 func _ready():
+	$"../Atom".end.connect(lab_end)
 	get_viewport().size_changed.connect(_on_size_changed)
 	var size = DisplayServer.window_get_size()
 	ui_target_size = size
@@ -53,7 +60,6 @@ var rotation_speed = 3.0
 var current_yaw: float = 0.0
 var current_pitch: float = 0.0
 func _process(_dt: float) -> void:
-	GLOBAL.GameAct
 	if look_target:
 		var cam = GLOBAL.player.camera
 		var diff = cam.global_position - look_target.global_position
@@ -75,6 +81,27 @@ func _process(_dt: float) -> void:
 		# Сохраняем текущие углы, чтобы при следующем look_target не было рывка
 		current_yaw = GLOBAL.player.global_rotation.y
 		current_pitch = GLOBAL.player.camera.rotation.x
+	
+	if GLOBAL.ui_state == GLOBAL.UI_STATE.GAME:
+		GLOBAL.hints.hint("open_tab", "KEY_OPEN_TAB")
+		GLOBAL.hints.hint("peek_hint", "KEY_PEEK_HINT")
+	else:
+		GLOBAL.hints.rm_hint("open_tab")
+		GLOBAL.hints.rm_hint("peek_hint")
+	
+	if GLOBAL.ui_state == GLOBAL.UI_STATE.BOARD:
+		GLOBAL.hints.hint("reset_view", "KEY_RESET_VIEW")
+		GLOBAL.hints.hint("zoom_in", "KEY_BOARD_ZOOM_IN")
+		GLOBAL.hints.hint("zoom_out", "KEY_BOARD_ZOOM_OUT")
+		GLOBAL.hints.hint("back", "KEY_INSPECT_BACK")
+	else:
+		GLOBAL.hints.rm_hint("reset_view")
+		GLOBAL.hints.rm_hint("zoom_in")
+		GLOBAL.hints.rm_hint("zoom_out")
+		GLOBAL.hints.rm_hint("back")
+
+	
+	
 	if Input.is_action_just_pressed("unfocus"):
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if Input.is_action_just_pressed("peek_hint") && GLOBAL.ui_state == GLOBAL.UI_STATE.GAME:
@@ -94,16 +121,27 @@ func _process(_dt: float) -> void:
 			GLOBAL.ui_state = GLOBAL.UI_STATE.GAME
 			close_tab()
 	if Input.is_action_just_pressed("back") && GLOBAL.ui_state == GLOBAL.UI_STATE.BOARD:
+		GLOBAL.ui_state = GLOBAL.UI_STATE.GAME
 		close_tab()
 	
-	GLOBAL.hint_node.hide()
+	var keep = false
 	if GLOBAL.ui_state == GLOBAL.UI_STATE.GAME && GLOBAL.interaction_ray:
 		var c = GLOBAL.interaction_ray.get_collider()
 		if c && c.is_in_group("interactible"):
-			GLOBAL.hint_node.show()
-			GLOBAL.hint_node.text = c.hint()
+			keep = true
+			var h = c.hint()
+			if h != "":
+				GLOBAL.hints.center_hint(c.hint_keymap(), h)
 			if Input.is_action_just_pressed("interact"):
+				GLOBAL.hints.rm_center_hint()
 				c.interact()
+	if !keep && GLOBAL.ui_state == GLOBAL.UI_STATE.GAME:
+		GLOBAL.hints.rm_center_hint()
+
+
+
+
+
 
 
 func close_tab():

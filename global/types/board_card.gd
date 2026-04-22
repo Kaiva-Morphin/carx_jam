@@ -25,8 +25,8 @@ func unlock(i):
 	$New.show()
 
 func init():
-	$Title.text = """[font otv="wght=800"]"""+data.title
-	$Image.texture = RUMOR.image(data.image)
+	$Title.text = """[font otv="wght=800"]"""+tr(data.title)
+	$Image.texture = RUMOR.image(data.image) 
 
 func _init() -> void:
 	pass

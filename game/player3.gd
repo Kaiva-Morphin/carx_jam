@@ -1,23 +1,5 @@
 extends CharacterBody3D
 
-#region DEBUG
-
-var debug = {}
-
-func dbg(key, value):
-	debug[key] = value
-
-func update_debug():
-	var dbgs = []
-	var keys = debug.keys()
-	keys.sort()
-	for key in keys:
-		dbgs.append(key+" "+str(debug[key]))
-	dbgs.append("STATE:"+str(STATES.keys()[state]))
-	$"../CanvasLayer/Label".text = "\n".join(dbgs)
-
-#endregion
-
 enum STATES {STAND, WALK, RUN, INAIR, FALLING, CRUNCH, SLIDE, ONWALL}
 
 
@@ -99,14 +81,13 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _process(_dt: float) -> void:
-	if Input.is_action_just_pressed("ui_right"):
+	if Input.is_action_just_pressed("shader"):
 		if $Joint/PlayerCamera/ScreenFX/Outline2.visible:
 			$Joint/PlayerCamera/ScreenFX/Outline2.hide()
 			$Joint/PlayerCamera/ScreenFX/Outline5.show()
 		else:
 			$Joint/PlayerCamera/ScreenFX/Outline2.show()
 			$Joint/PlayerCamera/ScreenFX/Outline5.hide()
-	dbg("FPS", Engine.get_frames_per_second())
 	head_bob(_dt)
 	#region FAV_LINES :D
 	#var v = sin(cinematic_lines) * 0.5 + 0.5
@@ -143,7 +124,8 @@ func _process(_dt: float) -> void:
 		fov_change = true
 	if fov_change || states(STATES.STAND):
 		player_camera.fov = lerp(player_camera.fov, cam_fov_target, _dt * FOV_DT_SPEED)
-	update_debug()
+	handle_gamepad()
+	
 
 #endregion
 
@@ -155,7 +137,6 @@ var state : STATES = STATES.STAND
 var coyot_time = 0.0
 
 var wall_normal : = Vector3.ZERO
-
 
 
 func _physics_process(_dt: float) -> void:
@@ -267,6 +248,7 @@ func _physics_process(_dt: float) -> void:
 @export var mass_kg: float = 1.0
 @export var push_force: float = 1.0
 
+
 func _push_rigid_bodies():
 	for i in range(get_slide_collision_count()):
 		var collision = get_slide_collision(i)
@@ -281,6 +263,7 @@ func _push_rigid_bodies():
 			var impulse = push_direction * impulse_strength
 			rigid_body.apply_central_impulse(impulse)
 
+
 func head_bob(dt):
 	player_camera_joint.rotation.x = -clamp(lerp(player_camera_joint.rotation.x, velocity.y * 0.01, dt * 0.001), -1., 1.)
 	var t_bob_n = 0.0
@@ -293,6 +276,7 @@ func head_bob(dt):
 	player_camera.position.y = sin(t_bob * BOB_FREQ) * bob_amp 
 	player_camera.position.x = cos(t_bob * BOB_FREQ * 0.5) * bob_amp * 0.3
 
+
 func handle_jump(_dt):
 	if states(STATES.CRUNCH): return
 	if jump_buffer > 0.0:
@@ -300,6 +284,7 @@ func handle_jump(_dt):
 			velocity.y = JUMP_STRENGTH
 			jump_buffer = 0.0
 			return
+
 
 var sensitivity := 0.005
 
@@ -314,20 +299,23 @@ func _unhandled_input(event):
 			if camera.global_rotation.x + target > -1.53:
 				camera.rotate_x(target)
 
+
 func handle_gamepad():
 	var look_x = Input.get_action_strength("look_right") - Input.get_action_strength("look_left")
 	var look_y = Input.get_action_strength("look_down") - Input.get_action_strength("look_up")
-	rotate_y(-look_x * sensitivity * 5)
-	var target = -look_y * sensitivity * 5
+	rotate_y(-look_x * sensitivity)
+	var target = -look_y * sensitivity
 	if target > 0:
-		if player_camera_joint.global_rotation.x + target < 1.53:
-			player_camera_joint.rotate_x(target)
+		if camera.global_rotation.x + target < 1.53:
+			camera.rotate_x(target)
 	else:
-		if player_camera_joint.global_rotation.x + target > -1.53:
-			player_camera_joint.rotate_x(target)
+		if camera.global_rotation.x + target > -1.53:
+			camera.rotate_x(target)
+
 
 func set_mouse_sensitivity(value: float):
 	sensitivity = value
+
 
 func states(...args):
 	return state in args

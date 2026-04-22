@@ -11,7 +11,9 @@ var dbg_label : Label
 var subtitle : RichTextLabel
 var subtitle_progress : ColorRect
 var inspect_cam_joint : Node3D
-	
+var hints : MarginContainer
+var visual_hint = preload("res://game/visual_hint.tscn")
+
 enum UI_STATE {
 	GAME,
 	INSPECTING,
@@ -40,10 +42,13 @@ func update_debug():
 enum GameAct {
 	Intro,
 	Home,
+	CanRide,
 	Suspect,
 	Lab,
 	Final
 }
+
+var game_act = GameAct.Home
 
 func _process(_dt: float) -> void:
 	update_debug()

@@ -1,5 +1,136 @@
 KEYS,ru_RU
-KEYS_BOARD,""
-KEY_BOARD_NOT_ALL,"[rainbow]Здесь еще есть что исследовать..."
-KEYS_VOICEOVER,""
+
+
+KEY_MOUSE_1,"ЛКМ"
+KEY_MOUSE_2,"ПКМ"
+KEY_PAPA_LABEL,"Фото с места преступления"
+KEY_INTERACTIBLE_DEFAULT,"Взаимодействовать"
+KEY_INTERACTIBLE_TALK,"Говорить"
+KEY_DIALOG_NEXT,"Продолжить"
+KEY_OPEN_TAB,"Открыть журнал"
+KEY_RESET_VIEW,"Сбросить позицию"
+KEY_PEEK_HINT,"Подсмотреть подсказки"
+KEY_INSPECT_BACK,"Назад"
+KEY_BOARD_ZOOM_IN,"Приблизить"
+KEY_BOARD_ZOOM_OUT,"Отдалить"
+KEY_CAN_RIDE,"Ехать"
+KEY_CANT_RIDE,"Пока рано уезжать"
+KEY_LAB_SWAP,"Изменить"
+
 KEY_VOICELINE_MORTY_HELLO,"[rainbow freq=0.4]Привет, я морти"
+KEY_VOICELINE_LAB_END,"Успешно решено!"
+
+
+
+KEY_MONO_ACT1, "Ничего не изменилось. Even the smell. ...Слишком тихо."
+KEY_MONO_MAIL, "Коммуналки, счета. И еще один конверт — без обратного адреса. Отправлено три дня назад. Перед смертью."
+KEY_MONO_MAIN_ENTRANCE, "Лента оборвана. Либо Демьян вернулся. Либо это сделал кто-то другой. Демьян под стражей...."
+KEY_MONO_HALLWAY, "Ковёр у входа. Икона в углу — Богородица, лампадка давно не горит. Он не был религиозен. Мама была... Почему он оставил это?"
+KEY_MONO_LIVING_BOTTLES, "Надо снять биоматериал с горлышка."
+KEY_MONO_LIVING_BOTTLES_DONE, "Чье это?"
+KEY_MONO_LIVING_CIG, "Папа не курил. Это Мальборо Ред. Демьян курит Лайт. Павел курит всё что найдёт."
+KEY_MONO_LIVING_PHOTO, "Мама, папа, Демьян, Павел, я. Ellis Island, 1981."
+KEY_MONO_SAFE, "Картина висит чуть криво. Сдвинута. Кто-то сдвинул её. Сейф. Маленький. Старый. У папы был сейф? Сейф закрыт. Нужен контекст."
+KEY_MONO_DIPLOMA, "Советский диплом. Здесь переаттестация — 83-й. Два года. Он никогда не говорил об этом."
+KEY_MONO_COMPARE, "Вот эта бутылочка. Она была здесь на фото. Сейчас её нет. В протоколе изъятия — её нет. Кто-то взял её после полиции."
+KEY_MONO_TRASH, "Порванная бумага. Кто-то рвал что-то. Недостаточно тщательно."
+KEY_MONO_BACKDOOR, "Задняя дверь. Открыта. Она всегда была заперта. Папа был параноиком насчёт задней двери."
+KEY_MONO_BACKDOOR_LOCK, "Царапины на замке. Свежие. Взломан? Или просто не тот ключ?"
+KEY_MONO_FOOTPRINTS, "Грязь. Свежая. Два следа. Один — ботинки. Другой — кроссовки. Полицейские были в ботинках. Демьян был в ботинках. Кто был в кроссовках?"
+KEY_MONO_TRASH_BIN, "Пустая бутылка пива. Та же марка. Но чистая — этикетка целая."
+KEY_MONO_DEMYAN_ROOM, "Кровать заправлена идеально. Медали, кубки. Библия. И письмо. Деньги не мои. Не трогай их. Когда он это написал?"
+KEY_MONO_BOOKS, "Камю. Ницше. Берроуз. Повсюду страницы с пометками. Он всегда говорил, что чтение — единственное честное дело."
+KEY_MONO_DRAWINGS, "Рисунки. На всех одно лицо. Отцовское. Снова и снова. Некоторые перечеркнуты."
+KEY_MONO_ROOM, "Моя старая комната. Я уехал в восемнадцать. Плакат всё ещё висит. Мои инициалы. Он сохранил их."
+KEY_MONO_FATHER_SAFE, "Ключ подходит. Деньги. Документы на другое имя. Советский паспорт. Он не был Виктором Карамазиным?"
+KEY_MONO_SUITCASE, "С этим чемоданом мы приехали. Он был набит советскими рублями. Он никогда не выбросил их."
+KEY_MONO_FLASK, "Афган. Не любил говорить об этом."
+KEY_MONO_BOX, "Папиросы. Советские. Фотографии. Обрывки из корзины — они тут."
+KEY_MONO_ATTIC_PHOTO, "Папа. Молодой. С каким-то человеком. На обороте: Кларенс, 1988."
+
+
+
+
+
+KEY_BOARD_NOT_ALL,"[b]Это еще не все[\b]"
+
+
+KEY_BOARD_MURDER_TITLE,"Убийство"
+KEY_BOARD_MURDER1,"Убийство Виктора Карамазина"
+KEY_BOARD_MURDER2,"Что-то тут не сходится"
+KEY_BOARD_MURDER3,"Нужно самому все проверить"
+
+KEY_BOARD_OFFICIAL_TITLE,"Официальная версия"
+KEY_BOARD_OFFICIAL1,"Смерть от передозировки алкоголя и сердечной недостаточности после драки"
+
+KEY_BOARD_OFFICIAL_MURDERER_TITLE,"Убийца"
+KEY_BOARD_OFFICIAL_MURDERER1,"Косвенный убийца - Демьян Карамазин"
+KEY_BOARD_OFFICIAL_MURDERER2,"Мотив: деньги и женщина"
+KEY_BOARD_OFFICIAL_MURDERER3,"Улики: чек отца при себе"
+KEY_BOARD_OFFICIAL_MURDERER4,"Вступил с убитым в драку накануне"
+
+KEY_BOARD_FATHER_MONEY_TITLE,"Чек отца"
+KEY_BOARD_FATHER_MONEY1,"Найден у Демьяна Карамазина"
+
+TODO,"ДРАКА?"
+TODO,"ГРУШЕНЬКА?"
+
+
+
+KEY_BOARD_MONO,""
+
+KEY_BOARD_UNK_TITLE,"Неизвестный"
+KEY_BOARD_UNK1,""
+KEY_BOARD_UNK2,""
+
+KEY_BOARD_ORIGINAL_BOARD_TITLE,"Оригинальное досье"
+KEY_BOARD_ORIGINAL_BOARD:"KEY_BOARD_ORIGINAL_BOARD"
+
+KEY_BOARD_TAPE_TITLE,"Сорванная лента"
+KEY_BOARD_TAPE:"KEY_BOARD_TAPE"
+
+KEY_BOARD_BREAKIN_TITLE,"Следы взлома"
+KEY_BOARD_BREAKIN,"KEY_BOARD_BREAKIN"
+
+KEY_BOARD_SNEAKERS_TITLE,"Следы кроссовок"
+KEY_BOARD_SNEAKERS1,"Кто-то пришел в кроссовках через заднюю дверь. На коврике входной двери таких отпечатков нет"
+KEY_BOARD_SNEAKERS_CONN,"Носит кроссовки"
+
+KEY_BOARD_BIO1_TITLE,"Биоматериал #1 — горлышко бутылки"
+KEY_BOARD_BIO1,"KEY_BOARD_BIO1"
+
+KEY_BOARD_MISSING_BOTTLE_TITLE,"Пропавшая бутылочка"
+KEY_BOARD_MISSING_BOTTLE,"KEY_BOARD_MISSING_BOTTLE"
+
+KEY_BOARD_MAIL_TITLE,"Конверт без обратного адреса"
+KEY_BOARD_MAIL,"KEY_BOARD_MAIL"
+
+KEY_BOARD_CIG_TITLE,"Окурок — Marlboro Red"
+KEY_BOARD_CIG,"KEY_BOARD_CIG"
+
+KEY_BOARD_SAFE_TITLE,"Сейф за картиной"
+KEY_BOARD_SAFE,"KEY_BOARD_SAFE"
+
+KEY_BOARD_DOCS_TITLE,"Обрывки документов. Много"
+KEY_BOARD_DOCS,"KEY_BOARD_DOCS"
+
+KEY_BOARD_BIO_2_TITLE,"Биоматериал #2 — бутылка из мусора"
+KEY_BOARD_BIO_2,"KEY_BOARD_BIO_2"
+
+KEY_BOARD_LETTER_TITLE,"Письмо отца к Демьяну"
+KEY_BOARD_LETTER,"KEY_BOARD_LETTER"
+
+KEY_BOARD_DRAWINGS_TITLE,"Рисунки Павла"
+KEY_BOARD_DRAWINGS,"KEY_BOARD_DRAWINGS"
+
+KEY_BOARD_PASSPORT_TITLE,"Документы на другое имя"
+KEY_BOARD_PASSPORT,"KEY_BOARD_PASSPORT"
+
+KEY_BOARD_FLASK_TITLE,"Армейская фляга — отец служил в Афганистане"
+KEY_BOARD_FLASK,"KEY_BOARD_FLASK"
+
+KEY_BOARD_PHOTO_TITLE,"Фото с неизвестным — Кларенс, 1988"
+KEY_BOARD_PHOTO,"KEY_BOARD_PHOTO"
+
+
+

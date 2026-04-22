@@ -16,7 +16,9 @@ func _process(_delta: float) -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if !body.is_in_group("player"): return
 	can_papa = true
+	GLOBAL.hints.hint("show_papa", "KEY_PAPA_LABEL")
 
 func _on_body_exited(body: Node3D) -> void:
 	if !body.is_in_group("player"): return
 	can_papa = false
+	GLOBAL.hints.rm_hint("show_papa")

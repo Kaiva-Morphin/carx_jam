@@ -1,5 +1,8 @@
 extends Node3D
 
+@onready var cam = $CamJoint/Camera3D
+
+
 # ─────────────────────────────────────────────
 #  ATOM CLASS
 # ─────────────────────────────────────────────
@@ -19,6 +22,8 @@ class Atom extends Area3D:
 		_enabled.position  = Vector3.ZERO
 		_disabled.position = Vector3.ZERO
 		enabled = true
+		collision_mask = 16
+		collision_layer = 16
 		_apply_visual()
 
 	func _apply_visual() -> void:
@@ -54,9 +59,9 @@ class Atom extends Area3D:
 
 const GRID_SIZE  := Vector3i(4, 3, 4)
 const CELL_SIZE  := 2.0
-
 var levels : Array = [
-
+	#[[1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
+	#[[1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
 	[
 		[1,1,0,0,
 		 1,1,0,0,
@@ -149,27 +154,33 @@ var target_rotate_x := 0.0 # Target Pitch
 
 var drag_sensitivity := 0.01
 var smooth_speed := 10.0   # Speed of lerp smoothing
-var pitch_limit := deg_to_rad(5.0)
-var pitch_limit_top := deg_to_rad(5.0)
+var pitch_limit := deg_to_rad(25.0)
+var pitch_limit_top := deg_to_rad(25.0)
 # -----------------------------------------------------------
 
 var scene_root : Node3D
+
+
 
 # ─────────────────────────────────────────────
 #  READY
 # ─────────────────────────────────────────────
 func _ready() -> void:
+	virtual_cursor.hide()
 	$Sample.hide()
 	$Sample.process_mode = PROCESS_MODE_DISABLED
-	#load_level(current_level)
+	VOICEOVER.sequence_end.connect(on_seq_end)
+	$DirectionalLight3D.show()
 
 # ─────────────────────────────────────────────
 #  INPUT
 # ─────────────────────────────────────────────
+var total = 0.0
 func _input(event: InputEvent) -> void:
 	if GLOBAL.ui_state != GLOBAL.UI_STATE.ATOM: return
 	if event is InputEventMouseButton:
 		if event.pressed:
+			total = 0.0
 			is_dragging = true
 			drag_started = false
 			drag_start_pos = event.position
@@ -180,7 +191,8 @@ func _input(event: InputEvent) -> void:
 			
 	elif event is InputEventMouseMotion and is_dragging:
 		var delta = event.relative
-		if not drag_started and event.relative.length() > 1.5:
+		total += delta.length()
+		if not drag_started and event.relative.length() > 1.5 || total > 3.0:
 			drag_started = true
 		
 		if drag_started:
@@ -191,6 +203,112 @@ func _input(event: InputEvent) -> void:
 			# Ограничиваем цель по вертикали сразу при вводе
 			target_rotate_x = clamp(target_rotate_x, -pitch_limit, pitch_limit_top)
 
+
+@onready var virtual_cursor : Control = $CanvasLayer/Control/Control
+@onready var virtual_cursor_texture : TextureRect = $CanvasLayer/Control/Control/Texture
+var virtual_cursor_pos : Vector2 = Vector2.ZERO
+var virtual_cursor_sensivity : float = 0.5
+
+var hovered = false
+var pressed = false
+var gamepad_sensitivity = 0.015
+func handle_gamepad():
+	if !GLOBAL.hints.is_gamepad: return
+	var look_x = Input.get_action_strength("right") - Input.get_action_strength("left")
+	var look_y = Input.get_action_strength("backward") - Input.get_action_strength("forward")
+	var v = Vector2(look_x, look_y)
+	if v.length() > 0.02:
+		v = v * gamepad_sensitivity * Vector2(-1.0, -1.0)
+		target_rotate_x += v.y
+		target_rotate_y += v.x * 0.1
+		target_rotate_x = clamp(target_rotate_x, -pitch_limit, pitch_limit_top)
+	var x = Input.get_action_strength("look_right") - Input.get_action_strength("look_left")
+	var y = Input.get_action_strength("look_down") - Input.get_action_strength("look_up")
+	virtual_cursor.position += Vector2(x, y) * virtual_cursor_sensivity
+	var c = _gamepad_raycast_from_screen(virtual_cursor.global_position)
+	pressed = Input.is_action_pressed("lab_swap")
+	if c:
+		if Input.is_action_just_pressed("lab_swap"):
+			c.swap(true)
+			if check_win():
+				_trigger_win()
+		hovered = true
+	else:
+		hovered = false
+	_limit_cursor_to_screen()
+
+func _limit_cursor_to_screen() -> void:
+	var vp_size = get_viewport().size
+	# position у Control локальный, поэтому ограничиваем относительно родителя
+	# Если родитель - корневой Control/CanvasLayer, это сработает корректно
+	virtual_cursor.position.x = clampf(virtual_cursor.position.x, 0, vp_size.x)
+	virtual_cursor.position.y = clampf(virtual_cursor.position.y, 0, vp_size.y)
+
+func _gamepad_raycast_from_screen(screen_pos: Vector2) -> Node3D:
+	var camera := get_viewport().get_camera_3d()
+	var from   := camera.project_ray_origin(screen_pos)
+	var dir    := camera.project_ray_normal(screen_pos)
+	var to     := from + dir * 1000.0
+	var space  := get_world_3d().direct_space_state
+	var query  := PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = 16
+	query.collide_with_areas = true
+	var result := space.intersect_ray(query)
+	return result.collider if result else null
+	#if result:
+		#result.collider.swap(true)
+		#if check_win():
+			#_trigger_win()
+
+signal end
+
+var dialog_ready = false
+var level_solved = false
+func begin():
+	virtual_cursor.position = $CanvasLayer/Control.size * 0.5
+	GLOBAL.hints.hint("dialog_next", "KEY_DIALOG_NEXT")
+	GLOBAL.hints.hint("lab_swap", "KEY_LAB_SWAP")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	cam.current = true
+	virtual_cursor.show()
+	load_level(0)
+	await _animate_enter()
+	is_animating = false
+	VOICEOVER.auto_next = true
+	VOICEOVER.start_sequence(sequences[0])
+
+var sequences = ["lab_1", "lab_2", "lab_3", "lab_4", "lab_5"]
+
+func on_seq_end(seq):
+	if seq in sequences:
+		dialog_ready = true
+		check_next()
+
+func on_next():
+	dialog_ready = false
+	if current_level == levels.size() + 1:
+		GLOBAL.hints.rm_hint("dialog_next")
+		GLOBAL.hints.rm_hint("lab_swap")
+		virtual_cursor.hide()
+		end.emit()
+		return
+	await get_tree().create_timer(0.5).timeout
+	VOICEOVER.auto_next = true
+	VOICEOVER.start_sequence(sequences[current_level])
+	if current_level == levels.size():
+		current_level += 1
+		dialog_ready = false
+		return
+	dialog_ready = false
+	level_solved = false
+	load_level(current_level)
+	await _animate_enter()
+	is_animating = false
+
+func check_next():
+	if dialog_ready && level_solved:
+		on_next()
+
 func _raycast_from_screen(screen_pos: Vector2) -> void:
 	var camera := get_viewport().get_camera_3d()
 	var from   := camera.project_ray_origin(screen_pos)
@@ -198,6 +316,7 @@ func _raycast_from_screen(screen_pos: Vector2) -> void:
 	var to     := from + dir * 1000.0
 	var space  := get_world_3d().direct_space_state
 	var query  := PhysicsRayQueryParameters3D.create(from, to)
+	query.collision_mask = 16
 	query.collide_with_areas = true
 	var result := space.intersect_ray(query)
 	if result:
@@ -215,10 +334,24 @@ func check_win() -> bool:
 	return true
 
 func _process(delta: float) -> void:
+	if !GLOBAL.hints.is_gamepad:
+		virtual_cursor.position = lerp(virtual_cursor.position, $CanvasLayer/Control.size * 0.5, delta * 10.0)
+		virtual_cursor_texture.modulate.a = lerp(virtual_cursor_texture.modulate.a, 0.0, delta * 10.0)
+	else:
+		var scale_factor = 1.0
+		if hovered:
+			scale_factor += 0.5
+			virtual_cursor_texture.modulate.a = lerp(virtual_cursor_texture.modulate.a, 0.9, delta * 10.0)
+		else:
+			virtual_cursor_texture.modulate.a = lerp(virtual_cursor_texture.modulate.a, 0.4, delta * 10.0)
+		if pressed:
+			scale_factor -= 0.5
+		virtual_cursor_texture.scale = lerp(virtual_cursor_texture.scale, Vector2.ONE * scale_factor, delta * 10.0)
+	
 	# Если мы не тащим мышку, вертикальный угол стремится к 0
 	if GLOBAL.ui_state != GLOBAL.UI_STATE.ATOM: return
-	if not is_dragging:
-		target_rotate_x = 0.0
+	handle_gamepad()
+	target_rotate_x = lerp(target_rotate_x, 0.0, smooth_speed * delta)
 	
 	# Плавное приближение текущих углов к целевым (Lerp)
 	_rotate_y = lerp(_rotate_y, target_rotate_y, smooth_speed * delta)
@@ -232,14 +365,13 @@ func _process(delta: float) -> void:
 
 func _trigger_win() -> void:
 	is_animating = true
-	print("WIN! Level %d complete." % current_level)
 	await _animate_win()
-	current_level = (current_level + 1) % levels.size()
+	current_level = (current_level + 1)
 	await _animate_exit()
 	_clear_field()
-	load_level(current_level)
-	await _animate_enter()
-	is_animating = false
+	level_solved = true
+	check_next()
+
 
 # ─────────────────────────────────────────────
 #  LEVEL LOADING

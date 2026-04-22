@@ -15,6 +15,11 @@ var zoom_step := 0.4
 var min_zoom := 0.25
 var max_zoom := 1.0
 
+var hover_null_timer: float = 0.0
+var hover_null_delay: float = 0.15 # TODO: 0.15
+
+var instant = true  # TODO
+
 @onready var sample = $Sample
 @onready var sample_line := $Sample/Line/Regular
 @onready var sample_line_hover := $Sample/Line/Hover
@@ -92,25 +97,25 @@ func discover_card(k) -> BoardCard:
 
 
 func on_hearing(k):
-	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD && !instant:
 		pending_events.append({ "type": EventType.HEARING, "key": k })
 	else:
 		_apply_hearing(k)
 
 func on_image_discovered(k):
-	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD && !instant:
 		pending_events.append({ "type": EventType.IMAGE, "key": k })
 	else:
 		_apply_image(k)
 
 func on_description(k, i):
-	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD && !instant:
 		pending_events.append({ "type": EventType.DESCRIPTION, "key": k, "index": i })
 	else:
 		_apply_description(k, i)
 
 func on_connection(f, t, d):
-	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD:
+	if cinematic_active or GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD && !instant:
 		pending_events.append({ "type": EventType.CONNECTION, "from": f, "to": t, "desc": d })
 	else:
 		_apply_connection(f, t, d)
@@ -118,13 +123,13 @@ func on_connection(f, t, d):
 func get_text(c):
 	return c.inspect()
 
-var hover_null_timer: float = 0.0
-var hover_null_delay: float = 0.15
 
 func _process(dt: float) -> void:
 	RUMOR.add_knowledge("located_signal")
 	RUMOR.add_knowledge("found_signal")
 	RUMOR.add_knowledge("visited_planet_x")
+	if GLOBAL.ui_state != GLOBAL.UI_STATE.BOARD: return
+	handle_gamepad()
 	var is_board = GLOBAL.ui_state == GLOBAL.UI_STATE.BOARD
 	if is_board and !was_board: _on_enter_board()
 	was_board = is_board
@@ -195,10 +200,9 @@ var log_zoom_target: float
 var log_zoom_current: float
 
 func handle_cam(dt):
-	if Input.is_action_just_pressed("reset_view"):
+	if Input.is_action_just_pressed("reset_view") && !cinematic_active:
 		target_pos = Vector2.ZERO
-		log_zoom_target = 0.0
-	GLOBAL.dbg("AVB", log_zoom_current)
+		log_zoom_target = -1.0
 	var t = 1.0 - exp(-move_smooth * dt)
 	log_zoom_current = lerp(log_zoom_current, log_zoom_target, t)
 	var actual_zoom = pow(2.0, log_zoom_current)
@@ -220,6 +224,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		var delta = current_pos - last_mouse_pos
 		target_pos -= delta / cam.zoom
 		last_mouse_pos = current_pos
+	if event is InputEventMouseMotion || event is InputEventMouseButton:
+		if GLOBAL.hints.is_gamepad:
+			GLOBAL.hints.is_gamepad = false
+			GLOBAL.hints.update_hints()
+
+func handle_gamepad():
+	if cinematic_active: return
+	var look_x = Input.get_action_strength("right") - Input.get_action_strength("left")
+	var look_y = Input.get_action_strength("backward") - Input.get_action_strength("forward")
+	var v = Vector2(look_x, look_y)
+	target_pos += v * -3.0 * (log_zoom_target * 0.5 - 0.5)
+	if Input.is_action_pressed("zoom_in"):
+		change_zoom(0.01, get_viewport_rect().size * 0.5)
+	if Input.is_action_pressed("zoom_out"):
+		change_zoom(-0.01, get_viewport_rect().size * 0.5)
 
 func change_zoom(amount: float, mouse_screen_pos: Vector2) -> void:
 	var viewport_size = get_viewport().get_visible_rect().size
@@ -273,6 +292,7 @@ func _apply_connection(f, t, d):
 
 func _on_enter_board():
 	if pending_events.is_empty(): return
+	
 	cinematic_queue = _build_cinematic_sequence(pending_events.duplicate())
 	pending_events.clear()
 	_start_cinematic()
@@ -346,7 +366,7 @@ func _build_cinematic_sequence(events: Array) -> Array:
 var cinematic_step := 0
 var cinematic_timer := 0.0
 const FLY_DURATION    := 1.0   # секунд на перелёт
-const LINGER_DURATION := 1.0   # секунд стоять у объекта
+const LINGER_DURATION := 0.0  # секунд стоять у объекта
 
 func _start_cinematic():
 	cinematic_active = true
@@ -434,6 +454,8 @@ func _handle_hover(dt: float):
 	var space_state = get_world_2d().direct_space_state
 	var params = PhysicsPointQueryParameters2D.new()
 	params.position = get_global_mouse_position()
+	if GLOBAL.hints.is_gamepad:
+		params.position = cam.position
 	params.collide_with_areas = true
 	params.collide_with_bodies = false
 

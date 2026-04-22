@@ -19,7 +19,7 @@ func end():
 
 func _ready() -> void:
 	initial_rotaion = rotation
-	interaction_record = {"type": GLOBAL.Interactable.Dialog, "node": self}
+	interaction_record = {"type": GLOBAL.Interactible.Dialog, "node": self}
 
 var player = false
 

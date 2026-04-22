@@ -1,0 +1,113 @@
+{
+	# region mono
+	"mono_act1" : {
+		"voice" : preload(path + "mono_act1.mp3"),
+		"text": "KEY_MONO_ACT1",
+	},
+	"mono_mail" : {
+		"voice" : preload(path + "mono_mail.mp3"),
+		"text": "KEY_MONO_MAIL",
+	},
+	"mono_main_entrance" : {
+		"voice" : preload(path + "mono_main_entrance.mp3"),
+		"text": "KEY_MONO_MAIN_ENTRANCE",
+	},
+	"mono_hallway" : {
+		"voice" : preload(path + "mono_hallway.mp3"),
+		"text": "KEY_MONO_HALLWAY",
+	},
+	"mono_living_bottles" : {
+		"voice" : preload(path + "mono_living_bottles.mp3"),
+		"text": "KEY_MONO_LIVING_BOTTLES",
+	},
+	"mono_living_cig" : {
+		"voice" : preload(path + "mono_living_cig.mp3"),
+		"text": "KEY_MONO_LIVING_CIG",
+	},
+	"mono_living_photo" : {
+		"voice" : preload(path + "mono_living_photo.mp3"),
+		"text": "KEY_MONO_LIVING_PHOTO",
+	},
+	"mono_safe" : {
+		"voice" : preload(path + "mono_safe.mp3"),
+		"text": "KEY_MONO_SAFE",
+	},
+	"mono_diploma" : {
+		"voice" : preload(path + "mono_diploma.mp3"),
+		"text": "KEY_MONO_DIPLOMA",
+	},
+	"mono_compare" : {
+		"voice" : preload(path + "mono_compare.mp3"),
+		"text": "KEY_MONO_COMPARE",
+	},
+	"mono_trash" : {
+		"voice" : preload(path + "mono_trash.mp3"),
+		"text": "KEY_MONO_TRASH",
+	},
+	"mono_backdoor" : {
+		"voice" : preload(path + "mono_backdoor.mp3"),
+		"text": "KEY_MONO_BACKDOOR",
+	},
+	"mono_backdoor_lock" : {
+		"voice" : preload(path + "mono_backdoor_lock.mp3"),
+		"text": "KEY_MONO_BACKDOOR_LOCK",
+	},
+	"mono_footprints" : {
+		"voice" : preload(path + "mono_footprints.mp3"),
+		"text": "KEY_MONO_FOOTPRINTS",
+	},
+	"mono_trash_bin" : {
+		"voice" : preload(path + "mono_trash_bin.mp3"),
+		"text": "KEY_MONO_TRASH_BIN",
+	},
+	"mono_demyan_room" : {
+		"voice" : preload(path + "mono_demyan_room.mp3"),
+		"text": "KEY_MONO_DEMYAN_ROOM",
+	},
+	"mono_books" : {
+		"voice" : preload(path + "mono_books.mp3"),
+		"text": "KEY_MONO_BOOKS",
+	},
+	"mono_drawings" : {
+		"voice" : preload(path + "mono_drawings.mp3"),
+		"text": "KEY_MONO_DRAWINGS",
+	},
+	"mono_room" : {
+		"voice" : preload(path + "mono_room.mp3"),
+		"text": "KEY_MONO_ROOM",
+	},
+	"mono_father_safe" : {
+		"voice" : preload(path + "mono_father_safe.mp3"),
+		"text": "KEY_MONO_FATHER_SAFE",
+	},
+	"mono_suitcase" : {
+		"voice" : preload(path + "mono_suitcase.mp3"),
+		"text": "KEY_MONO_SUITCASE",
+	},
+	"mono_flask" : {
+		"voice" : preload(path + "mono_flask.mp3"),
+		"text": "KEY_MONO_FLASK",
+	},
+	"mono_box" : {
+		"voice" : preload(path + "mono_box.mp3"),
+		"text": "KEY_MONO_BOX",
+	},
+	"mono_attic_photo" : {
+		"voice" : preload(path + "mono_attic_photo.mp3"),
+		"text": "KEY_MONO_ATTIC_PHOTO",
+	},
+	# endregion mono
+
+	"morty_hello" : {
+		"voice" : preload(path + "morty_hello.mp3"),
+		"text": "KEY_VOICELINE_MORTY_HELLO",
+	},
+	"lab_1" : {"voice" : preload(path + "morty_hello.mp3"),"text": "1",},
+	"lab_2" : {"voice" : preload(path + "morty_hello.mp3"),"text": "2",},
+	"lab_3" : {"voice" : preload(path + "morty_hello.mp3"),"text": "3",},
+	"lab_4" : {"voice" : preload(path + "morty_hello.mp3"),"text": "4",},
+	"lab_end" : {
+		"voice" : preload(path + "morty_hello.mp3"),
+		"text": "KEY_VOICELINE_LAB_END",
+	}
+}
