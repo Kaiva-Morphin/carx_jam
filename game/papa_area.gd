@@ -8,7 +8,7 @@ func _process(_delta: float) -> void:
 	if !can_papa: return
 	if Input.is_action_just_pressed("show_papa"):
 		if !shoot:
-			VOICEOVER.auto_next = true
+			# VOICEOVER.auto_next = true
 			VOICEOVER.start_sequence("mono_compare")
 			RUMOR.add_knowledge("missing_bottle")
 		shoot = true

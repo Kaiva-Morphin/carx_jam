@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bbysocuu828t1"
+path="res://.godot/imported/0 — копия.mp3-37f22ddc56d2f4a82a0257e39539e68d.mp3str"
+
+[deps]
+
+source_file="res://assets/voiceover_silence/0 — копия.mp3"
+dest_files=["res://.godot/imported/0 — копия.mp3-37f22ddc56d2f4a82a0257e39539e68d.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

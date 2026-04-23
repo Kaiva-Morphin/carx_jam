@@ -113,22 +113,22 @@ var levels : Array = [
 		 0,1,0,0]
 	],
 
-	[
-		[1,1,1,1,
-		 1,0,0,1,
-		 1,0,0,1,
-		 1,1,1,1],
-
-		[1,0,0,1,
-		 0,0,0,0,
-		 0,0,0,0,
-		 1,0,0,1],
-
-		[1,1,1,1,
-		 1,0,0,1,
-		 1,0,0,1,
-		 1,1,1,1]
-	],
+	#[
+		#[1,1,1,1,
+		 #1,0,0,1,
+		 #1,0,0,1,
+		 #1,1,1,1],
+#
+		#[1,0,0,1,
+		 #0,0,0,0,
+		 #0,0,0,0,
+		 #1,0,0,1],
+#
+		#[1,1,1,1,
+		 #1,0,0,1,
+		 #1,0,0,1,
+		 #1,1,1,1]
+	#],
 ]
 
 # ─────────────────────────────────────────────
@@ -265,6 +265,9 @@ signal end
 var dialog_ready = false
 var level_solved = false
 func begin():
+	VOICEOVER.start_sequence("pre_lab")
+
+func enter():
 	virtual_cursor.position = $CanvasLayer/Control.size * 0.5
 	GLOBAL.hints.hint("dialog_next", "KEY_DIALOG_NEXT")
 	GLOBAL.hints.hint("lab_swap", "KEY_LAB_SWAP")
@@ -274,12 +277,15 @@ func begin():
 	load_level(0)
 	await _animate_enter()
 	is_animating = false
-	VOICEOVER.auto_next = true
+	# # VOICEOVER.auto_next = true
 	VOICEOVER.start_sequence(sequences[0])
 
-var sequences = ["lab_1", "lab_2", "lab_3", "lab_4", "lab_5"]
+var sequences = ["lab1", "lab2", "lab3", "lab4"]
 
 func on_seq_end(seq):
+	if seq == "pre_lab":
+		GLOBAL.processor.black_out()
+		enter()
 	if seq in sequences:
 		dialog_ready = true
 		check_next()
@@ -293,7 +299,7 @@ func on_next():
 		end.emit()
 		return
 	await get_tree().create_timer(0.5).timeout
-	VOICEOVER.auto_next = true
+	# VOICEOVER.auto_next = true
 	VOICEOVER.start_sequence(sequences[current_level])
 	if current_level == levels.size():
 		current_level += 1

@@ -33,7 +33,7 @@ func interact() -> void:
 	if knowledge != "":
 		RUMOR.add_knowledge(knowledge)
 	if sequence != "":
-		VOICEOVER.auto_next = true
+		# VOICEOVER.auto_next = true
 		VOICEOVER.start_sequence(sequence)
 	if _hint_node:
 		_hint_node.queue_free()

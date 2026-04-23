@@ -1,11 +1,22 @@
 extends Node3D
 
+
 func lab_end():
+	GLOBAL.processor.black_in()
+	await get_tree().create_timer(1.5).timeout
+	VOICEOVER.start_sequence("fourth_ride")
+	pass
+
+func se(s):
+	if s != "fourth_ride": return
 	GLOBAL.player.camera.current = true
 	GLOBAL.game_act = GLOBAL.GameAct.Final
 	GLOBAL.ui_state = GLOBAL.UI_STATE.GAME
 	GLOBAL.unblock_player()
 	$"../Atom".process_mode = Node.PROCESS_MODE_DISABLED
+	GLOBAL.processor.black_out()
+
+
 
 var ui_target_size
 func _ready():
@@ -16,6 +27,12 @@ func _ready():
 	set_subviewport_size(size)
 	GLOBAL.processor = self
 	GLOBAL.dbg_label = $"../CanvasLayer/Dbg"
+	RUMOR.description_unlocked.connect(on_rumor)
+	VOICEOVER.sequence_end.connect(se)
+
+
+func on_rumor(_r, _i):
+	new_doc()
 
 
 func _on_size_changed():
@@ -47,7 +64,7 @@ func _unhandled_input(event):
 		&& (GLOBAL.ui_state == GLOBAL.UI_STATE.GAME \
 		|| GLOBAL.ui_state == GLOBAL.UI_STATE.INSPECTING \
 		|| GLOBAL.ui_state == GLOBAL.UI_STATE.DIALOG
-		):
+	):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _notification(what):
@@ -171,6 +188,18 @@ func papa_in():
 
 func papa_out():
 	$"../CanvasLayer/PapaPlayer".play("out")
+
+func black_in():
+	$"../CanvasLayer/BlackPlayer".play("in")
+
+func black_in_const():
+	$"../CanvasLayer/BlackPlayer".play("in")
+
+func black_out():
+	$"../CanvasLayer/BlackPlayer".play("out")
+
+func new_doc():
+	$"../CanvasLayer/Doc".play("new")
 
 
 var look_target = null

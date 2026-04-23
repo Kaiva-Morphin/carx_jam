@@ -16,7 +16,7 @@ func on_enter(body):
 	if knowledge != "":
 		RUMOR.add_knowledge(knowledge)
 	if sequence != "":
-		VOICEOVER.auto_next = true
+		# VOICEOVER.auto_next = true
 		VOICEOVER.start_sequence(sequence)
 	else:
 		printerr("areavotrigger empty seq")

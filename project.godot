@@ -193,6 +193,7 @@ locale/translations=PackedStringArray("res://assets/locale/locale.ru_RU.translat
 
 3d_render/layer_3="atom"
 3d_render/layer_4="Jail"
+3d_render/layer_6="room"
 3d_physics/layer_2="ladder"
 3d_physics/layer_3="interactible"
 3d_physics/layer_4="inspectable_interactible"
