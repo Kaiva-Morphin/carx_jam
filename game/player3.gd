@@ -82,12 +82,12 @@ func _ready() -> void:
 
 func _process(_dt: float) -> void:
 	if Input.is_action_just_pressed("shader"):
-		if $Joint/PlayerCamera/ScreenFX/Outline2.visible:
-			$Joint/PlayerCamera/ScreenFX/Outline2.hide()
-			$Joint/PlayerCamera/ScreenFX/Outline5.show()
-		else:
-			$Joint/PlayerCamera/ScreenFX/Outline2.show()
+		if $Joint/PlayerCamera/ScreenFX/Outline5.visible:
+			#$Joint/PlayerCamera/ScreenFX/Outline2.hide()
 			$Joint/PlayerCamera/ScreenFX/Outline5.hide()
+		else:
+			#$Joint/PlayerCamera/ScreenFX/Outline2.show()
+			$Joint/PlayerCamera/ScreenFX/Outline5.show()
 	head_bob(_dt)
 	#region FAV_LINES :D
 	#var v = sin(cinematic_lines) * 0.5 + 0.5
